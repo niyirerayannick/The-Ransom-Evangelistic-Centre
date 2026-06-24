@@ -2,7 +2,7 @@
 {% load i18n %}
 
 {% block page_title %}{% trans "Site Settings" %}{% endblock %}
-{% block page_subtitle %}<p class="mt-1 text-sm text-gray-500">{% trans "Manage site-wide configuration." %}</p>{% endblock %}
+{% block page_subtitle %}<p class="mt-1 text-sm text-gray-500">{% trans "Manage site-wide configuration and maintenance mode." %}</p>{% endblock %}
 
 {% block content %}
 <div class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
@@ -14,24 +14,51 @@
     <div class="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{{ form.non_field_errors }}</div>
     {% endif %}
 
-    <form method="post" enctype="multipart/form-data" class="space-y-6" x-data="{ tab: 'en' }">
+    <form method="post" enctype="multipart/form-data" class="space-y-6" x-data="{ tab: 'maintenance' }">
         {% csrf_token %}
 
         <div class="flex flex-wrap gap-1 border-b border-gray-100 pb-3">
+            <button type="button" @click="tab = 'maintenance'" :class="tab === 'maintenance' ? 'bg-primary text-white' : 'bg-gray-100'" class="rounded-lg px-4 py-2 text-sm font-bold">{% trans "Maintenance" %}</button>
             <button type="button" @click="tab = 'en'" :class="tab === 'en' ? 'bg-primary text-white' : 'bg-gray-100'" class="rounded-lg px-4 py-2 text-sm font-bold">English</button>
             <button type="button" @click="tab = 'fr'" :class="tab === 'fr' ? 'bg-primary text-white' : 'bg-gray-100'" class="rounded-lg px-4 py-2 text-sm font-bold">Français</button>
             <button type="button" @click="tab = 'rw'" :class="tab === 'rw' ? 'bg-primary text-white' : 'bg-gray-100'" class="rounded-lg px-4 py-2 text-sm font-bold">Kinyarwanda</button>
             <button type="button" @click="tab = 'general'" :class="tab === 'general' ? 'bg-primary text-white' : 'bg-gray-100'" class="rounded-lg px-4 py-2 text-sm font-bold">{% trans "General" %}</button>
         </div>
 
+        <div x-show="tab === 'maintenance'" x-cloak class="space-y-5 rounded-2xl border border-primary/20 bg-primary/5 p-5">
+            <p class="text-sm text-gray-600">{% trans "When maintenance mode is ON, public visitors see the coming soon page. Dashboard and admin access remain available." %}</p>
+            {% if env_maintenance_mode %}
+            <p class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">{% trans "Environment variable MAINTENANCE_MODE is enabled. The dashboard toggle below controls the live site once site settings are saved." %}</p>
+            {% endif %}
+            {% for field in form %}
+            {% if field.name == "maintenance_mode" or field.name == "maintenance_expected_launch_date" or field.name == "maintenance_contact_email" or field.name == "maintenance_show_countdown" %}
+            <div>
+                <label class="mb-1 block text-sm font-medium">{{ field.label }}</label>
+                {% if field.field.widget.input_type == "checkbox" %}
+                <label class="flex items-center gap-2">{{ field }} <span>{{ field.label }}</span></label>
+                {% else %}
+                {{ field }}
+                {% endif %}
+                {% if field.errors %}<p class="text-xs text-red-600">{{ field.errors.0 }}</p>{% endif %}
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
+
         {% for field in form %}
-        {% if field.name|slice:"-3:" == "_en" %}
+        {% if field.name|slice:"-3:" == "_en" and field.name|slice:":12" == "maintenance_" %}
+        <div x-show="tab === 'en'" x-cloak><label class="mb-1 block text-sm font-medium">{{ field.label }}</label>{{ field }}{% if field.errors %}<p class="text-xs text-red-600">{{ field.errors.0 }}</p>{% endif %}</div>
+        {% elif field.name|slice:"-3:" == "_fr" and field.name|slice:":12" == "maintenance_" %}
+        <div x-show="tab === 'fr'" x-cloak><label class="mb-1 block text-sm font-medium">{{ field.label }}</label>{{ field }}{% if field.errors %}<p class="text-xs text-red-600">{{ field.errors.0 }}</p>{% endif %}</div>
+        {% elif field.name|slice:"-3:" == "_rw" and field.name|slice:":12" == "maintenance_" %}
+        <div x-show="tab === 'rw'" x-cloak><label class="mb-1 block text-sm font-medium">{{ field.label }}</label>{{ field }}{% if field.errors %}<p class="text-xs text-red-600">{{ field.errors.0 }}</p>{% endif %}</div>
+        {% elif field.name|slice:"-3:" == "_en" %}
         <div x-show="tab === 'en'" x-cloak><label class="mb-1 block text-sm font-medium">{{ field.label }}</label>{{ field }}{% if field.errors %}<p class="text-xs text-red-600">{{ field.errors.0 }}</p>{% endif %}</div>
         {% elif field.name|slice:"-3:" == "_fr" %}
         <div x-show="tab === 'fr'" x-cloak><label class="mb-1 block text-sm font-medium">{{ field.label }}</label>{{ field }}{% if field.errors %}<p class="text-xs text-red-600">{{ field.errors.0 }}</p>{% endif %}</div>
         {% elif field.name|slice:"-3:" == "_rw" %}
         <div x-show="tab === 'rw'" x-cloak><label class="mb-1 block text-sm font-medium">{{ field.label }}</label>{{ field }}{% if field.errors %}<p class="text-xs text-red-600">{{ field.errors.0 }}</p>{% endif %}</div>
-        {% else %}
+        {% elif field.name|slice:":12" != "maintenance_" %}
         <div x-show="tab === 'general'" x-cloak><label class="mb-1 block text-sm font-medium">{{ field.label }}</label>{{ field }}{% if field.errors %}<p class="text-xs text-red-600">{{ field.errors.0 }}</p>{% endif %}</div>
         {% endif %}
         {% endfor %}

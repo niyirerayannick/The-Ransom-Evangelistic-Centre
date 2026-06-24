@@ -1,0 +1,136 @@
+{% load i18n static %}
+<!DOCTYPE html>
+<html lang="{{ LANGUAGE_CODE }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>{{ maintenance_title }} — {{ site_settings.site_name|default:"The Ransom Evangelistic Centre" }}</title>
+    {% if site_settings.favicon %}<link rel="icon" href="{{ site_settings.favicon.url }}">{% endif %}
+    <link rel="preconnect" href="https://flagcdn.com">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#d39200",
+                        "primary-dark": "#b87900",
+                        ink: "#222222",
+                        paper: "#f5f5f5",
+                        "heading-blue": "#0b5f89"
+                    },
+                    fontFamily: {
+                        serif: ["Georgia", "Cambria", "Times New Roman", "serif"],
+                        sans: ["Inter", "Arial", "sans-serif"]
+                    },
+                    boxShadow: {
+                        soft: "0 12px 28px rgba(0,0,0,.10)"
+                    }
+                }
+            }
+        }
+    </script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <style>
+        [x-cloak] { display: none !important; }
+        body { background: #f5f5f5; color: #222222; }
+    </style>
+</head>
+<body class="min-h-screen font-serif antialiased" x-data="maintenanceCountdown({{ maintenance_launch_timestamp|default:'null' }}, {{ maintenance_show_countdown|yesno:'true,false' }})">
+    <div class="flex min-h-screen items-center justify-center px-4 py-10">
+        <div class="w-full max-w-xl overflow-hidden rounded-3xl border border-white/80 bg-white shadow-soft">
+            <div class="bg-gradient-to-br from-primary/15 via-paper to-white px-8 py-10 text-center sm:px-10">
+                {% if site_settings.logo %}
+                <img src="{{ site_settings.logo.url }}" alt="{{ site_settings.site_name }}" class="mx-auto h-16 w-auto max-w-[220px] object-contain">
+                {% else %}
+                <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary/15 text-xl font-bold text-primary">REC</div>
+                {% endif %}
+
+                <span class="mt-6 inline-block text-[11px] font-bold uppercase tracking-[.24em] text-primary">{% trans "Coming soon" %}</span>
+                <h1 class="mt-3 text-3xl font-bold leading-tight text-ink sm:text-4xl newspaper-heading">{{ maintenance_title }}</h1>
+                <p class="mt-4 text-base leading-relaxed text-gray-600">{{ maintenance_message }}</p>
+
+                {% if maintenance_show_countdown and maintenance_launch_timestamp %}
+                <div class="mt-8 grid grid-cols-4 gap-3" x-show="remaining" x-cloak>
+                    <div class="rounded-2xl bg-white/80 p-3 shadow-sm">
+                        <div class="text-2xl font-bold text-heading-blue" x-text="remaining.days">00</div>
+                        <div class="text-[10px] font-bold uppercase tracking-wider text-gray-500">{% trans "Days" %}</div>
+                    </div>
+                    <div class="rounded-2xl bg-white/80 p-3 shadow-sm">
+                        <div class="text-2xl font-bold text-heading-blue" x-text="remaining.hours">00</div>
+                        <div class="text-[10px] font-bold uppercase tracking-wider text-gray-500">{% trans "Hours" %}</div>
+                    </div>
+                    <div class="rounded-2xl bg-white/80 p-3 shadow-sm">
+                        <div class="text-2xl font-bold text-heading-blue" x-text="remaining.minutes">00</div>
+                        <div class="text-[10px] font-bold uppercase tracking-wider text-gray-500">{% trans "Minutes" %}</div>
+                    </div>
+                    <div class="rounded-2xl bg-white/80 p-3 shadow-sm">
+                        <div class="text-2xl font-bold text-heading-blue" x-text="remaining.seconds">00</div>
+                        <div class="text-[10px] font-bold uppercase tracking-wider text-gray-500">{% trans "Seconds" %}</div>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if maintenance_contact_email %}
+                <a href="mailto:{{ maintenance_contact_email }}" class="mt-8 inline-flex rounded-full bg-primary px-7 py-3 text-xs font-bold uppercase tracking-wider text-white transition hover:bg-primary-dark">
+                    {{ maintenance_contact_email }}
+                </a>
+                {% endif %}
+            </div>
+
+            <div class="border-t border-gray-100 px-8 py-6 sm:px-10">
+                <div class="flex flex-wrap items-center justify-between gap-4">
+                    <nav class="flex items-center gap-2" aria-label="{% trans 'Languages' %}">
+                        {% for link in language_links %}
+                        <a href="{{ link.url }}"
+                           lang="{{ link.code }}"
+                           title="{{ link.label }}"
+                           class="rounded-md p-0.5 transition {% if link.active %}ring-2 ring-primary ring-offset-1{% else %}opacity-80 hover:opacity-100{% endif %}">
+                            <img src="{{ link.flag_url }}" alt="" width="28" height="20" class="h-5 w-7 rounded-sm object-cover shadow-sm ring-1 ring-black/10" loading="lazy">
+                        </a>
+                        {% endfor %}
+                    </nav>
+
+                    {% if social_links %}
+                    <div class="flex flex-wrap gap-3 text-xs font-bold uppercase tracking-wider text-heading-blue">
+                        {% for item in social_links %}
+                        <a href="{{ item.url }}" target="_blank" rel="noopener" class="hover:text-primary">{{ item.label }}</a>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <p class="mt-6 text-center text-xs text-gray-500">{{ copyright_text }}</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    function maintenanceCountdown(targetMs, enabled) {
+        return {
+            remaining: null,
+            init() {
+                if (!enabled || !targetMs) return;
+                const tick = () => {
+                    const diff = targetMs - Date.now();
+                    if (diff <= 0) {
+                        this.remaining = null;
+                        return;
+                    }
+                    const totalSeconds = Math.floor(diff / 1000);
+                    this.remaining = {
+                        days: String(Math.floor(totalSeconds / 86400)).padStart(2, '0'),
+                        hours: String(Math.floor((totalSeconds % 86400) / 3600)).padStart(2, '0'),
+                        minutes: String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0'),
+                        seconds: String(totalSeconds % 60).padStart(2, '0'),
+                    };
+                };
+                tick();
+                setInterval(tick, 1000);
+            },
+        };
+    }
+    </script>
+</body>
+</html>

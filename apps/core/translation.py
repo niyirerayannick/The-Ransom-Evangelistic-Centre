@@ -3,7 +3,16 @@ from .models import Advertisement, HomepageSection, Menu, MenuItem, Partner, Sit
 
 
 class SiteSettingTranslationOptions(TranslationOptions):
-    fields = ("site_name", "tagline", "footer_text", "address_line_1", "address_line_2", "copyright_text")
+    fields = (
+        "site_name",
+        "tagline",
+        "footer_text",
+        "address_line_1",
+        "address_line_2",
+        "copyright_text",
+        "maintenance_title",
+        "maintenance_message",
+    )
 
 
 class MenuTranslationOptions(TranslationOptions):

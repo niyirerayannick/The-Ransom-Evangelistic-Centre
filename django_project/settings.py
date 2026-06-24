@@ -5,11 +5,24 @@ from django.utils.translation import gettext_lazy as _
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "django-insecure-dev-key-change-in-production")
+SECRET_KEY = os.environ.get("SECRET_KEY") or os.environ.get(
+    "DJANGO_SECRET_KEY", "django-insecure-dev-key-change-in-production"
+)
 
-DEBUG = os.environ.get("DJANGO_DEBUG", "True").lower() == "true"
+DEBUG = (os.environ.get("DEBUG") or os.environ.get("DJANGO_DEBUG", "True")).lower() == "true"
 
-ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1,yvesgashugi.org").split(",")
+MAINTENANCE_MODE = os.environ.get("MAINTENANCE_MODE", "False").lower() == "true"
+
+_allowed_hosts = os.environ.get("ALLOWED_HOSTS") or os.environ.get(
+    "DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1,yvesgashugi.org"
+)
+ALLOWED_HOSTS = [host.strip() for host in _allowed_hosts.split(",") if host.strip()]
+
+_csrf_origins = os.environ.get("CSRF_TRUSTED_ORIGINS", "")
+CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in _csrf_origins.split(",") if origin.strip()]
+
+if not DEBUG:
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 INSTALLED_APPS = [
     "modeltranslation",
@@ -42,12 +55,14 @@ SITE_ID = 1
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "apps.core.middleware.LegacyRedirectMiddleware",
     "django.middleware.locale.LocaleMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "apps.core.middleware.MaintenanceModeMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "django_htmx.middleware.HtmxMiddleware",
@@ -79,10 +94,11 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "django_project.wsgi.application"
 
+_sqlite_path = os.environ.get("SQLITE_DB_PATH") or os.environ.get("DJANGO_DB_PATH")
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
-        "NAME": os.environ.get("DJANGO_DB_PATH", BASE_DIR / "db.sqlite3"),
+        "NAME": Path(_sqlite_path) if _sqlite_path else BASE_DIR / "db.sqlite3",
     }
 }
 
@@ -125,10 +141,20 @@ MODELTRANSLATION_PRELOAD_ALL_LANGUAGES = True
 
 STATIC_URL = "/static/"
 STATICFILES_DIRS = [BASE_DIR / "static" / "src"]
-STATIC_ROOT = BASE_DIR / "staticfiles"
+_static_root = os.environ.get("STATIC_ROOT")
+STATIC_ROOT = Path(_static_root) if _static_root else BASE_DIR / "staticfiles"
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
+    },
+}
 
 MEDIA_URL = "/media/"
-MEDIA_ROOT = BASE_DIR / "media"
+_media_root = os.environ.get("MEDIA_ROOT")
+MEDIA_ROOT = Path(_media_root) if _media_root else BASE_DIR / "media"
 
 CKEDITOR_UPLOAD_PATH = "uploads/"
 CKEDITOR_CONFIGS = {

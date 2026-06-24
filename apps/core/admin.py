@@ -9,6 +9,10 @@ class SiteSettingAdmin(admin.ModelAdmin):
     list_display = ["site_name", "contact_email", "updated_at"]
     fieldsets = [
         ("General", {"fields": ["site_name", "tagline", "logo", "footer_logo", "favicon", "default_language"]}),
+        ("Maintenance", {"fields": [
+            "maintenance_mode", "maintenance_title", "maintenance_message",
+            "maintenance_expected_launch_date", "maintenance_contact_email", "maintenance_show_countdown",
+        ]}),
         ("Footer", {"fields": ["footer_text", "copyright_text"]}),
         ("Social Media", {"fields": ["facebook_url", "twitter_url", "x_url", "instagram_url", "youtube_url"]}),
         ("Contact", {"fields": ["contact_email", "email", "contact_phone", "phone_1", "phone_2", "phone_3", "address", "address_line_1", "address_line_2"]}),

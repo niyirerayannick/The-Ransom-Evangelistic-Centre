@@ -382,6 +382,9 @@ class SiteSettingDashboardForm(forms.ModelForm):
             "address_line_2_en", "address_line_2_fr", "address_line_2_rw",
             "copyright_text_en", "copyright_text_fr", "copyright_text_rw",
             "default_language", "google_analytics_id",
+            "maintenance_mode", "maintenance_title_en", "maintenance_title_fr", "maintenance_title_rw",
+            "maintenance_message_en", "maintenance_message_fr", "maintenance_message_rw",
+            "maintenance_expected_launch_date", "maintenance_contact_email", "maintenance_show_countdown",
         ]
         widgets = {
             "site_name_en": _widget("text"), "site_name_fr": _widget("text"), "site_name_rw": _widget("text"),
@@ -396,7 +399,21 @@ class SiteSettingDashboardForm(forms.ModelForm):
             "address_line_2_en": _widget("text"), "address_line_2_fr": _widget("text"), "address_line_2_rw": _widget("text"),
             "copyright_text_en": _widget("text"), "copyright_text_fr": _widget("text"), "copyright_text_rw": _widget("text"),
             "default_language": _widget("select"), "google_analytics_id": _widget("text"),
+            "maintenance_mode": _widget("checkbox"),
+            "maintenance_title_en": _widget("text"), "maintenance_title_fr": _widget("text"), "maintenance_title_rw": _widget("text"),
+            "maintenance_message_en": _widget("textarea"), "maintenance_message_fr": _widget("textarea"), "maintenance_message_rw": _widget("textarea"),
+            "maintenance_expected_launch_date": _widget("datetime"),
+            "maintenance_contact_email": _widget("email"),
+            "maintenance_show_countdown": _widget("checkbox"),
         }
+
+    def save(self, commit=True):
+        obj = super().save(commit=False)
+        obj.maintenance_title = obj.maintenance_title_en or obj.maintenance_title
+        obj.maintenance_message = obj.maintenance_message_en or obj.maintenance_message
+        if commit:
+            obj.save()
+        return obj
 
 
 class LeadershipTeamForm(forms.ModelForm):

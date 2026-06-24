@@ -1,4 +1,5 @@
 from django.contrib import messages
+from django.conf import settings as django_settings
 from django.core.exceptions import PermissionDenied
 from django.db.models import Q
 from django.shortcuts import redirect, render
@@ -324,6 +325,7 @@ class SettingsView(ModuleWriteMixin, View):
             "form": form,
             "site_setting": setting,
             "can_write": user_can_write_module(request.user, "settings"),
+            "env_maintenance_mode": django_settings.MAINTENANCE_MODE,
         })
 
     def post(self, request):

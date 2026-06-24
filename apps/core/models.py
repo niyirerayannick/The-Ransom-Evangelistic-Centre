@@ -33,6 +33,12 @@ class SiteSetting(models.Model):
     copyright_text = models.CharField(max_length=255, blank=True)
     default_language = models.CharField(max_length=5, choices=LANGUAGE_CHOICES, default="en")
     google_analytics_id = models.CharField(max_length=50, blank=True)
+    maintenance_mode = models.BooleanField(default=False)
+    maintenance_title = models.CharField(max_length=200, blank=True)
+    maintenance_message = models.TextField(blank=True)
+    maintenance_expected_launch_date = models.DateTimeField(blank=True, null=True)
+    maintenance_contact_email = models.EmailField(blank=True)
+    maintenance_show_countdown = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

@@ -1,5 +1,5 @@
 from django.db.models import F, Q
-from django.http import Http404
+from django.http import HttpResponse, Http404
 from django.shortcuts import get_object_or_404, redirect
 from django.utils import timezone
 from django.utils.translation import get_language
@@ -56,3 +56,7 @@ def advertisement_click(request, pk):
         raise Http404
     Advertisement.objects.filter(pk=pk).update(clicks=F("clicks") + 1)
     return redirect(advertisement.link)
+
+
+def health_check(request):
+    return HttpResponse("ok", content_type="text/plain")
