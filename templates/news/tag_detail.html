@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}#{{ tag.name }} - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container-custom py-8">
+    <h1 class="section-title">{% trans "Tag" %}: #{{ tag.name }}</h1>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for post in posts %}
+        <article class="card group">
+            <a href="{{ post.get_absolute_url }}">
+                {% if post.featured_image %}<img src="{{ post.featured_image.url }}" alt="{{ post.title_for_language }}" class="w-full h-44 object-cover group-hover:scale-105 transition">{% endif %}
+            </a>
+            <div class="p-4">
+                <h2 class="font-bold line-clamp-2 group-hover:text-blue-700"><a href="{{ post.get_absolute_url }}">{{ post.title_for_language }}</a></h2>
+                <div class="flex text-xs text-gray-500 mt-2">
+                    <span>{{ post.published_at|date:"M d, Y" }}</span>
+                    <span class="mx-2">&middot;</span>
+                    <span>{{ post.reading_time }} {% trans "min read" %}</span>
+                </div>
+            </div>
+        </article>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

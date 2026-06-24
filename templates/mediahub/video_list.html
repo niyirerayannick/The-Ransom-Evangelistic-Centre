@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Videos" %} - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container-custom py-8">
+    <h1 class="section-title">{% trans "Videos" %}</h1>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for video in videos %}
+        <div class="card">
+            <div class="aspect-w-16 aspect-h-9 bg-gray-100">
+                {% if video.thumbnail %}
+                <img src="{{ video.thumbnail.url }}" alt="{{ video.title }}" class="w-full object-cover">
+                {% endif %}
+            </div>
+            <div class="p-4">
+                <h2 class="text-lg font-bold">{{ video.title }}</h2>
+                {% if video.description %}<p class="text-sm text-gray-600 mt-1">{{ video.description }}</p>{% endif %}
+                {% if video.embed_url %}<a href="{{ video.embed_url }}" target="_blank" class="btn-primary text-sm mt-3 inline-block">{% trans "Watch Video" %}</a>{% endif %}
+            </div>
+        </div>
+        {% empty %}
+        <p class="col-span-full text-center text-gray-500 py-12">{% trans "No videos yet." %}</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block content %}
+{% include "partials/page_hero.html" with eyebrow="Ministry in action" %}
+<section class="bg-paper py-14">
+    <div class="site-container">
+        <div class="grid gap-8 lg:grid-cols-[.75fr_1.25fr]">
+            <div>{% include "partials/section_title.html" with eyebrow="Serving through truth and care" title="How REC serves" text=page.excerpt %}</div>
+            <div class="page-copy rounded-3xl bg-white p-8 shadow-sm">{{ page.content|safe }}</div>
+        </div>
+        <div class="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            <article class="rounded-2xl bg-white p-7 shadow-sm"><span class="text-3xl text-primary">✎</span><h3 class="mt-4 text-xl font-bold newspaper-heading">{% trans "Publications" %}</h3><p class="mt-3 text-sm text-gray-600">{% trans "Articles and reflections that make biblical wisdom accessible." %}</p><a href="/{{ LANGUAGE_CODE }}/news/" class="mt-5 inline-block text-xs font-bold text-primary">{% trans "Learn more" %} →</a></article>
+            <article class="rounded-2xl bg-white p-7 shadow-sm"><span class="text-3xl text-primary">♡</span><h3 class="mt-4 text-xl font-bold newspaper-heading">{% trans "Counselling" %}</h3><p class="mt-3 text-sm text-gray-600">{% trans "Compassionate guidance for individuals, families, and leaders." %}</p><a href="/{{ LANGUAGE_CODE }}/find-a-counsellor/" class="mt-5 inline-block text-xs font-bold text-primary">{% trans "Learn more" %} →</a></article>
+            <article class="rounded-2xl bg-white p-7 shadow-sm"><span class="text-3xl text-primary">⌂</span><h3 class="mt-4 text-xl font-bold newspaper-heading">{% trans "Healing and Family Support" %}</h3><p class="mt-3 text-sm text-gray-600">{% trans "Resources that help restore hearts, relationships, and homes." %}</p></article>
+            <article class="rounded-2xl bg-white p-7 shadow-sm"><span class="text-3xl text-primary">♙</span><h3 class="mt-4 text-xl font-bold newspaper-heading">{% trans "Leadership Teachings" %}</h3><p class="mt-3 text-sm text-gray-600">{% trans "Constructive teaching for responsible Christian leadership." %}</p></article>
+            <article class="rounded-2xl bg-white p-7 shadow-sm"><span class="text-3xl text-primary">↗</span><h3 class="mt-4 text-xl font-bold newspaper-heading">{% trans "Gospel Empowerment" %}</h3><p class="mt-3 text-sm text-gray-600">{% trans "Equipping believers to grow, serve, and share their faith." %}</p></article>
+            <article class="rounded-2xl bg-white p-7 shadow-sm"><span class="text-3xl text-primary">▤</span><h3 class="mt-4 text-xl font-bold newspaper-heading">{% trans "Books and Resources" %}</h3><p class="mt-3 text-sm text-gray-600">{% trans "Long-form resources for deeper learning and formation." %}</p><a href="/{{ LANGUAGE_CODE }}/books/" class="mt-5 inline-block text-xs font-bold text-primary">{% trans "Learn more" %} →</a></article>
+            <article class="rounded-2xl bg-white p-7 shadow-sm sm:col-span-2 lg:col-span-3"><span class="text-3xl text-primary">◎</span><h3 class="mt-4 text-xl font-bold newspaper-heading">{% trans "Community Engagement" %}</h3><p class="mt-3 max-w-3xl text-sm text-gray-600">{% trans "Partnership and outreach that carry Gospel-centred care beyond the website." %}</p></article>
+        </div>
+        <div class="mt-14 rounded-3xl bg-heading-blue p-8 text-white sm:p-10">
+            <div class="text-center">{% include "partials/section_title.html" with eyebrow="A simple pathway" title="How REC helps people" %}</div>
+            <div class="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-5">
+                <div class="rounded-2xl bg-white/10 p-5 text-center"><span class="text-2xl font-bold text-primary newspaper-heading">01</span><strong class="mt-2 block">{% trans "Read" %}</strong></div>
+                <div class="rounded-2xl bg-white/10 p-5 text-center"><span class="text-2xl font-bold text-primary newspaper-heading">02</span><strong class="mt-2 block">{% trans "Learn" %}</strong></div>
+                <div class="rounded-2xl bg-white/10 p-5 text-center"><span class="text-2xl font-bold text-primary newspaper-heading">03</span><strong class="mt-2 block">{% trans "Heal" %}</strong></div>
+                <div class="rounded-2xl bg-white/10 p-5 text-center"><span class="text-2xl font-bold text-primary newspaper-heading">04</span><strong class="mt-2 block">{% trans "Grow" %}</strong></div>
+                <div class="rounded-2xl bg-white/10 p-5 text-center"><span class="text-2xl font-bold text-primary newspaper-heading">05</span><strong class="mt-2 block">{% trans "Share" %}</strong></div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

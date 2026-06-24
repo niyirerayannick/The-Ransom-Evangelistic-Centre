@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block content %}
+{% include "partials/page_hero.html" with eyebrow="Why REC exists" %}
+<section class="bg-paper py-14">
+    <div class="site-container">
+        <div class="grid gap-6 lg:grid-cols-2">
+            <article class="rounded-3xl bg-heading-blue p-8 text-white shadow-xl sm:p-10"><span class="text-xs font-bold uppercase tracking-[.2em] text-primary">{% trans "Our mission" %}</span><h2 class="mt-4 text-3xl font-bold newspaper-heading">{% trans "Communicate the Gospel faithfully." %}</h2><p class="mt-5 leading-relaxed text-blue-50">{% trans "Equip people with biblical wisdom through writing, counselling, teaching, and compassionate service." %}</p></article>
+            <article class="rounded-3xl bg-white p-8 shadow-xl sm:p-10"><span class="text-xs font-bold uppercase tracking-[.2em] text-primary">{% trans "Our vision" %}</span><h2 class="mt-4 text-3xl font-bold newspaper-heading">{% trans "Lives and communities transformed." %}</h2><p class="mt-5 leading-relaxed text-gray-600">{% trans "People flourishing in the truth, grace, healing, and salvation found in Jesus Christ." %}</p></article>
+        </div>
+        <div class="page-copy mx-auto mt-10 max-w-4xl rounded-3xl bg-white p-8 shadow-sm">{{ page.content|safe }}</div>
+        <div class="mt-14 text-center">{% include "partials/section_title.html" with eyebrow="What shapes us" title="Our Core Values" %}</div>
+        <div class="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {% for icon,title,text in values %}
+            <article class="rounded-2xl bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg"><span class="text-2xl text-primary">{{ icon }}</span><h3 class="mt-4 text-lg font-bold newspaper-heading">{{ title }}</h3><p class="mt-2 text-sm text-gray-600">{{ text }}</p></article>
+            {% empty %}
+            <article class="rounded-2xl bg-white p-6 shadow-sm"><span class="text-2xl">✦</span><h3 class="mt-4 text-lg font-bold newspaper-heading">{% trans "Wisdom" %}</h3><p class="mt-2 text-sm text-gray-600">{% trans "Biblical understanding applied with humility." %}</p></article>
+            <article class="rounded-2xl bg-white p-6 shadow-sm"><span class="text-2xl">✝</span><h3 class="mt-4 text-lg font-bold newspaper-heading">{% trans "Salvation" %}</h3><p class="mt-2 text-sm text-gray-600">{% trans "Hope and new life through Jesus Christ." %}</p></article>
+            <article class="rounded-2xl bg-white p-6 shadow-sm"><span class="text-2xl">↗</span><h3 class="mt-4 text-lg font-bold newspaper-heading">{% trans "Empowerment" %}</h3><p class="mt-2 text-sm text-gray-600">{% trans "Equipping people to live and serve faithfully." %}</p></article>
+            <article class="rounded-2xl bg-white p-6 shadow-sm"><span class="text-2xl">♡</span><h3 class="mt-4 text-lg font-bold newspaper-heading">{% trans "Healing" %}</h3><p class="mt-2 text-sm text-gray-600">{% trans "Compassionate care for hearts and lives." %}</p></article>
+            <article class="rounded-2xl bg-white p-6 shadow-sm"><span class="text-2xl">⌂</span><h3 class="mt-4 text-lg font-bold newspaper-heading">{% trans "Family Restoration" %}</h3></article>
+            <article class="rounded-2xl bg-white p-6 shadow-sm"><span class="text-2xl">◎</span><h3 class="mt-4 text-lg font-bold newspaper-heading">{% trans "Constructive Teaching" %}</h3></article>
+            <article class="rounded-2xl bg-white p-6 shadow-sm"><span class="text-2xl">♙</span><h3 class="mt-4 text-lg font-bold newspaper-heading">{% trans "Leadership" %}</h3></article>
+            {% endfor %}
+        </div>
+        <div class="mt-12">{% with cta_url="/"|add:LANGUAGE_CODE|add:"/contact-us/" %}{% include "partials/cta_banner.html" with eyebrow="Our shared calling" title="Join us in spreading the Gospel with wisdom." button_text="CONTACT REC" button_url=cta_url %}{% endwith %}</div>
+    </div>
+</section>
+{% endblock %}

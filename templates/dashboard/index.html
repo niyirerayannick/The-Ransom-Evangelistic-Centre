@@ -1,0 +1,150 @@
+{% extends "dashboard/base.html" %}
+{% load i18n dashboard_tags %}
+
+{% block page_title %}{% trans "Dashboard Overview" %}{% endblock %}
+{% block page_subtitle %}<p class="mt-1 text-sm text-gray-500">{% trans "Welcome back. Here is what is happening across the site." %}</p>{% endblock %}
+
+{% block content %}
+<div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+    {% include "dashboard/partials/stat_card.html" with label="Total Posts" value=stats.total_posts icon="article" %}
+    {% include "dashboard/partials/stat_card.html" with label="Published" value=stats.published_posts icon="check_circle" accent="text-green-600" %}
+    {% include "dashboard/partials/stat_card.html" with label="Drafts" value=stats.draft_posts icon="draft" %}
+    {% include "dashboard/partials/stat_card.html" with label="Pending Review" value=stats.pending_review_posts icon="pending" accent="text-amber-600" %}
+    {% include "dashboard/partials/stat_card.html" with label="Total Users" value=stats.total_users icon="group" %}
+</div>
+
+<div class="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    {% include "dashboard/partials/stat_card.html" with label="Pages" value=stats.total_pages icon="description" %}
+    {% include "dashboard/partials/stat_card.html" with label="Comments Pending" value=stats.pending_comments icon="chat" accent="text-amber-600" %}
+    {% include "dashboard/partials/stat_card.html" with label="Counselling" value=stats.total_counselling icon="support_agent" %}
+    {% include "dashboard/partials/stat_card.html" with label="Contact Messages" value=stats.total_contact icon="contact_mail" %}
+</div>
+
+<div class="mt-8 grid gap-6 lg:grid-cols-3">
+    <div class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm lg:col-span-1">
+        <h2 class="mb-4 text-sm font-bold uppercase tracking-wider text-gray-500">{% trans "Posts by Language" %}</h2>
+        <div class="space-y-3">
+            {% for item in posts_by_language %}
+            <div>
+                <div class="mb-1 flex justify-between text-sm">
+                    <span class="font-medium">{{ item.lang }}</span>
+                    <span class="text-gray-500">{{ item.count }}</span>
+                </div>
+                <div class="h-2 overflow-hidden rounded-full bg-gray-100">
+                    {% widthratio item.count stats.total_posts 100 as pct %}
+                    <div class="h-full rounded-full bg-primary" style="width: {% if stats.total_posts %}{{ pct }}%{% else %}0%{% endif %}"></div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm lg:col-span-1">
+        <h2 class="mb-4 text-sm font-bold uppercase tracking-wider text-gray-500">{% trans "Posts by Status" %}</h2>
+        <ul class="space-y-2">
+            {% for row in posts_by_status %}
+            <li class="flex items-center justify-between rounded-lg bg-paper px-3 py-2 text-sm">
+                <span class="capitalize">{{ row.status|default:"unknown" }}</span>
+                <span class="font-bold text-primary">{{ row.count }}</span>
+            </li>
+            {% empty %}
+            <li class="text-sm text-gray-500">{% trans "No posts yet." %}</li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <div class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm lg:col-span-1">
+        <h2 class="mb-4 text-sm font-bold uppercase tracking-wider text-gray-500">{% trans "Engagement" %}</h2>
+        <ul class="space-y-2 text-sm">
+            <li class="flex justify-between rounded-lg bg-paper px-3 py-2"><span>{% trans "Donation Pledges" %}</span><strong>{{ stats.total_donations }}</strong></li>
+            <li class="flex justify-between rounded-lg bg-paper px-3 py-2"><span>{% trans "Subscribers" %}</span><strong>{{ stats.total_subscribers }}</strong></li>
+            <li class="flex justify-between rounded-lg bg-paper px-3 py-2"><span>{% trans "New Counselling" %}</span><strong>{{ stats.counselling_new }}</strong></li>
+            <li class="flex justify-between rounded-lg bg-paper px-3 py-2"><span>{% trans "New Contact" %}</span><strong>{{ stats.contact_new }}</strong></li>
+        </ul>
+    </div>
+</div>
+
+<section class="mt-8">
+    <h2 class="mb-4 text-lg font-bold">{% trans "Modules" %}</h2>
+    <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        {% for key, name, desc, count, url_name, icon in module_cards %}
+        <div class="group rounded-2xl border border-gray-200 bg-white p-5 shadow-sm transition hover:border-primary/30 hover:shadow-md">
+            <div class="flex items-start gap-4">
+                <span class="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">{% dash_icon icon size_class="text-[26px]" %}</span>
+                <div class="min-w-0 flex-1">
+                    <h3 class="font-bold text-ink">{{ name }}</h3>
+                    <p class="mt-1 text-xs text-gray-500">{{ desc }}</p>
+                    <p class="mt-3 text-2xl font-bold text-primary">{{ count }}</p>
+                    <a href="{% url url_name %}" class="mt-3 inline-flex rounded-lg bg-primary px-3 py-1.5 text-xs font-bold text-white hover:bg-primary-dark">{% trans "Manage" %} {{ name }}</a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+
+{% if pending_posts %}
+<section class="mt-8">
+    <h2 class="mb-4 text-lg font-bold">{% trans "Pending Review" %}</h2>
+    <div class="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+        <table class="min-w-full divide-y divide-gray-100 text-sm">
+            <thead class="bg-gray-50 text-left text-xs font-bold uppercase tracking-wider text-gray-500">
+                <tr>
+                    <th class="px-4 py-3">{% trans "Title" %}</th>
+                    <th class="px-4 py-3">{% trans "Author" %}</th>
+                    <th class="px-4 py-3">{% trans "Updated" %}</th>
+                    <th class="px-4 py-3"></th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-50">
+                {% for post in pending_posts %}
+                <tr class="hover:bg-gray-50/50">
+                    <td class="px-4 py-3 font-medium">{{ post.title_en|default:post.title }}</td>
+                    <td class="px-4 py-3 text-gray-500">{{ post.author }}</td>
+                    <td class="px-4 py-3 text-gray-500">{{ post.updated_at|date:"M j, Y H:i" }}</td>
+                    <td class="px-4 py-3 text-right"><a href="{% url 'dashboard:post_edit' post.pk %}" class="font-bold text-primary">{% trans "Review" %}</a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endif %}
+
+<section class="mt-8 grid gap-6 lg:grid-cols-2">
+    <div>
+        <div class="mb-4 flex items-center justify-between">
+            <h2 class="text-lg font-bold">{% trans "Latest Posts" %}</h2>
+            <a href="{% url 'dashboard:post_list' %}" class="text-sm font-bold text-primary">{% trans "View all" %} →</a>
+        </div>
+        <div class="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+            <table class="min-w-full text-sm">
+                <tbody class="divide-y divide-gray-50">
+                    {% for post in recent_posts %}
+                    <tr>
+                        <td class="px-4 py-3 font-medium">{{ post.title_en|default:post.title|truncatechars:50 }}</td>
+                        <td class="px-4 py-3 text-right"><a href="{% url 'dashboard:post_edit' post.pk %}" class="text-primary">{% trans "Edit" %}</a></td>
+                    </tr>
+                    {% empty %}
+                    <tr><td class="px-4 py-8 text-center text-gray-500">{% trans "No posts yet." %}</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {% if recent_contacts %}
+    <div>
+        <h2 class="mb-4 text-lg font-bold">{% trans "Recent Contact Messages" %}</h2>
+        <div class="space-y-2">
+            {% for msg in recent_contacts %}
+            <div class="rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm">
+                <p class="font-medium">{{ msg.full_name }} — {{ msg.subject|truncatechars:40 }}</p>
+                <p class="text-xs text-gray-500">{{ msg.created_at|date:"M j, Y H:i" }}</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</section>
+{% endblock %}

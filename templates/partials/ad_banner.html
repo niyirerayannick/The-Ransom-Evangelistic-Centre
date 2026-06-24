@@ -1,0 +1,11 @@
+{% if ad %}
+<aside class="mx-auto my-5 flex justify-center" aria-label="{{ ad.title }}">
+    {% if ad.link %}<a href="{% url 'advertisement_click' ad.pk %}" target="_blank" rel="noopener sponsored" class="block max-w-full">{% endif %}
+        <picture>
+            {% if ad.mobile_image %}<source media="(max-width: 639px)" srcset="{{ ad.mobile_image.url }}">{% endif %}
+            <img src="{{ ad.image.url }}" alt="{{ ad.title }}" width="{{ ad.desktop_width }}" height="{{ ad.desktop_height }}"
+                 class="max-h-[250px] max-w-full object-contain sm:max-h-[100px]" loading="lazy">
+        </picture>
+    {% if ad.link %}</a>{% endif %}
+</aside>
+{% endif %}

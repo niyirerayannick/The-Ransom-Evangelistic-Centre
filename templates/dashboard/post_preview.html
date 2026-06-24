@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{{ preview_seo_title|default:preview_title }} — {% trans "Preview" %}{% endblock %}
+{% block meta_description %}{{ preview_meta_description|default:preview_excerpt|striptags|truncatechars:155 }}{% endblock %}
+
+{% block extra_head %}
+<style>
+    .article-copy { color: #303030; font-family: Georgia, Cambria, "Times New Roman", serif; font-size: 1.08rem; line-height: 1.9; }
+    .article-copy > * + * { margin-top: 1.35rem; }
+    .article-copy h2, .article-copy h3 { color: #222; font-weight: 700; margin-top: 2rem; }
+    .article-copy a { color: #0b5f89; text-decoration: underline; }
+    .article-copy img { max-width: 100%; height: auto; }
+    .article-copy blockquote { border-left: 4px solid #d39200; background: #faf7ef; padding: 1rem 1.25rem; font-style: italic; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="border-b border-amber-200 bg-amber-50">
+    <div class="site-container flex flex-wrap items-center justify-between gap-4 py-3">
+        <div>
+            <p class="text-xs font-bold uppercase tracking-wider text-amber-700">{% trans "Preview Mode" %} — {% trans "This is how the article will appear on the website." %}</p>
+            {% if using_fallback %}
+            <p class="mt-1 text-xs text-amber-600">{% trans "Some content is falling back to English because the selected translation is incomplete." %}</p>
+            {% endif %}
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+            {% for code in language_codes %}
+            <a href="?lang={{ code }}" class="rounded-full px-3 py-1 text-xs font-bold {% if preview_lang == code %}bg-primary text-white{% else %}bg-white text-gray-600 ring-1 ring-gray-200{% endif %}">
+                {% if code == "en" %}{% trans "English" %}{% elif code == "fr" %}{% trans "French" %}{% else %}{% trans "Kinyarwanda" %}{% endif %}
+            </a>
+            {% endfor %}
+            <a href="{% url 'dashboard:post_edit' post.pk %}" class="rounded-full bg-heading-blue px-4 py-1 text-xs font-bold text-white">{% trans "Back to Editor" %}</a>
+        </div>
+    </div>
+</div>
+
+<div class="border-t border-gray-100 bg-paper">
+    <div class="site-container py-5">
+        <nav class="text-xs text-gray-500">
+            <a href="{% url 'dashboard:home' %}" class="hover:text-primary">{% trans "Dashboard" %}</a>
+            <span class="mx-2">/</span>
+            <span>{% trans "Preview" %}</span>
+        </nav>
+    </div>
+</div>
+
+<main class="bg-white">
+    <article>
+        <header class="site-container pb-8 pt-7 text-center">
+            {% if post.category %}
+            <span class="inline-flex bg-primary px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-white">{{ post.category.name }}</span>
+            {% endif %}
+            <h1 class="mx-auto mt-5 max-w-4xl text-3xl font-bold leading-tight text-ink md:text-5xl newspaper-heading">{{ preview_title }}</h1>
+            {% if preview_excerpt %}
+            <p class="mx-auto mt-5 max-w-2xl text-base text-gray-500">{{ preview_excerpt }}</p>
+            {% endif %}
+            <div class="mt-6 flex flex-wrap items-center justify-center gap-4 text-xs text-gray-500">
+                {% if post.author %}<span>{% trans "By" %} {{ post.author.get_full_name|default:post.author.username }}</span>{% endif %}
+                {% if post.published_at %}<time>{{ post.published_at|date:"F j, Y" }}</time>{% endif %}
+            </div>
+        </header>
+
+        {% if post.featured_image %}
+        <figure class="site-container">
+            <img src="{{ post.featured_image.url }}" alt="{{ preview_title }}" class="max-h-[600px] w-full object-cover">
+        </figure>
+        {% endif %}
+
+        <div class="site-container max-w-3xl py-10">
+            <div class="article-copy">{{ preview_content|safe }}</div>
+        </div>
+    </article>
+</main>
+{% endblock %}

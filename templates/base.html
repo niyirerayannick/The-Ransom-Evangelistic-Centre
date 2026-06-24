@@ -1,0 +1,82 @@
+{% load i18n static %}
+<!DOCTYPE html>
+<html lang="{{ LANGUAGE_CODE }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{{ site_settings.site_name|default:"The Ransom Evangelistic Centre" }}{% endblock %}</title>
+    <meta name="description" content="{% block meta_description %}{{ site_settings.tagline }}{% endblock %}">
+    {% if site_settings.favicon %}<link rel="icon" href="{{ site_settings.favicon.url }}">{% endif %}
+    <link rel="preconnect" href="https://flagcdn.com">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+                theme: {
+                    extend: {
+                        colors: {
+                            primary: "#d39200",
+                            "primary-dark": "#b87900",
+                            ink: "#222222",
+                            paper: "#f5f5f5",
+                            "heading-blue": "#0b5f89"
+                        },
+                        fontFamily: {
+                            serif: ["Georgia", "Cambria", "Times New Roman", "serif"],
+                            sans: ["Inter", "Arial", "sans-serif"]
+                        },
+                        boxShadow: {
+                            soft: "0 12px 28px rgba(0,0,0,.10)"
+                        }
+                    }
+                }
+        }
+    </script>
+    <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/collapse@3.x.x/dist/cdn.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <style>
+        :root {
+            --color-primary: #d39200;
+            --color-primary-dark: #b87900;
+            --color-dark: #333333;
+            --color-light: #f5f5f5;
+            --color-blue-heading: #0b5f89;
+        }
+        [x-cloak] { display: none !important; }
+        body { color: var(--color-dark); background: var(--color-light); }
+        .site-container { width: min(1180px, calc(100% - 2rem)); margin-inline: auto; }
+        .newspaper-heading { font-family: Georgia, Cambria, "Times New Roman", serif; }
+        .rule-title { position: relative; padding-bottom: .55rem; border-bottom: 1px solid #e5e5e5; }
+        .rule-title::after { content: ""; position: absolute; bottom: -1px; left: 0; width: 48px; height: 3px; background: var(--color-primary); }
+        .center-rule::after { content: ""; display: block; width: 84px; height: 3px; margin: .65rem auto 0; background: linear-gradient(90deg, var(--color-primary) 0 10%, transparent 10% 16%, var(--color-primary) 16%); }
+        .page-copy { color:#444; font-size:1rem; line-height:1.85; }
+        .page-copy > * + * { margin-top:1.1rem; }
+        .page-copy h2,.page-copy h3 { color:#222; font-weight:700; line-height:1.25; margin-top:1.8rem; }
+        .page-copy h2 { color:#0b5f89; font-size:1.7rem; }
+        .page-copy h3 { font-size:1.35rem; }
+        .page-copy a { color:#0b5f89; text-decoration:underline; text-underline-offset:3px; }
+        .page-copy img { max-width:100%; height:auto; border-radius:1rem; }
+        .page-copy ul,.page-copy ol { padding-left:1.5rem; }
+        .page-copy ul { list-style:disc; }
+        .page-copy ol { list-style:decimal; }
+    </style>
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="font-serif antialiased">
+    {% include "partials/topbar.html" %}
+    {% include "partials/header.html" %}
+    {% if messages %}
+    <div class="fixed right-4 top-4 z-[100] max-w-sm space-y-2" x-data="{ visible: true }" x-show="visible" x-transition>
+        {% for message in messages %}
+        <div class="flex items-start gap-3 rounded-xl border border-primary/20 bg-white p-4 text-sm shadow-xl">
+            <span class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-white">✓</span>
+            <p class="flex-1">{{ message }}</p>
+            <button @click="visible = false" class="text-gray-400 hover:text-ink">×</button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    <main>{% block content %}{% endblock %}</main>
+    {% include "partials/footer.html" %}
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

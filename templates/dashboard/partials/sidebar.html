@@ -1,0 +1,50 @@
+{% load i18n dashboard_tags %}
+<aside class="fixed inset-y-0 left-0 z-40 w-64 transform border-r border-gray-200 bg-white transition-transform lg:static lg:translate-x-0"
+       :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'">
+    <div class="flex h-full flex-col">
+        <div class="border-b border-gray-100 px-5 py-5">
+            <a href="{% url 'dashboard:home' %}" class="flex items-center gap-3">
+                <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-white">{% dash_icon "dashboard" size_class="text-[22px]" %}</span>
+                <div>
+                    <p class="text-sm font-bold text-ink">TREC Dashboard</p>
+                    <p class="text-[11px] text-gray-500">{% trans "Content Management" %}</p>
+                </div>
+            </a>
+        </div>
+        <nav class="flex-1 overflow-y-auto p-4">
+            {% for group in dashboard_sidebar %}
+            <div class="mb-5">
+                <p class="mb-2 px-3 text-[10px] font-bold uppercase tracking-widest text-gray-400">{{ group.label }}</p>
+                <div class="space-y-0.5">
+                    {% for item in group.items %}
+                    <a href="{{ item.url }}"
+                       {% if item.external %}target="_blank" rel="noopener"{% endif %}
+                       class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition
+                       {% if request.path == item.url or item.url in request.path %}bg-primary/10 text-primary{% else %}text-gray-600 hover:bg-gray-50 hover:text-ink{% endif %}">
+                        <span class="{% if request.path == item.url or item.url in request.path %}text-primary{% else %}text-gray-400{% endif %}">{% dash_icon item.icon size_class="text-[20px]" %}</span>
+                        <span>{{ item.label }}</span>
+                        {% if item.external %}<span class="ml-auto text-gray-400">{% dash_icon "open_in_new" size_class="text-[14px]" %}</span>{% endif %}
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% empty %}
+            <a href="{% url 'dashboard:home' %}" class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-gray-600">{% dash_icon "dashboard" %} {% trans "Dashboard" %}</a>
+            {% endfor %}
+        </nav>
+        <div class="border-t border-gray-100 p-4">
+            <a href="{% url 'dashboard:profile' %}" class="flex items-center gap-3 rounded-xl px-3 py-2 text-sm text-gray-600 hover:bg-gray-50">
+                {% if request.user.profile_image %}
+                <img src="{{ request.user.profile_image.url }}" alt="" class="h-8 w-8 rounded-full object-cover">
+                {% else %}
+                <span class="flex h-8 w-8 items-center justify-center rounded-full bg-primary/15 text-xs font-bold text-primary">{{ request.user.username|slice:":1"|upper }}</span>
+                {% endif %}
+                <div class="min-w-0">
+                    <p class="truncate font-medium">{{ request.user.get_full_name|default:request.user.username }}</p>
+                    <p class="truncate text-[11px] text-gray-400">{{ request.user.get_role_display }}</p>
+                </div>
+            </a>
+        </div>
+    </div>
+</aside>
+<div x-show="sidebarOpen" x-cloak @click="sidebarOpen = false" class="fixed inset-0 z-30 bg-black/40 lg:hidden"></div>

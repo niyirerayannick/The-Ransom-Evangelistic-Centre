@@ -1,0 +1,20 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: REC\n"
+"Language: rw\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Home"
+msgstr "Ahabanza"
+
+msgid "Who we are"
+msgstr "Abo turi bo"
+
+msgid "Latest Articles"
+msgstr "Inkuru ziheruka"
+
+msgid "Our Partners"
+msgstr "Abafatanyabikorwa bacu"

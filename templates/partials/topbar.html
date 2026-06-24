@@ -1,0 +1,15 @@
+{% load i18n %}
+<div class="bg-primary text-white text-[11px] font-semibold sm:text-xs">
+    <div class="site-container flex min-h-11 items-center justify-between gap-4">
+        <div class="flex gap-4 sm:gap-5">
+            {% for item in topbar_items %}
+                <a href="{{ item.get_url }}" class="hover:underline">{{ item.title }}</a>
+            {% empty %}
+                <span>{% trans "Wisdom" %}</span>
+                <span>{% trans "Salvation" %}</span>
+                <span>{% trans "Empower" %}</span>
+            {% endfor %}
+        </div>
+        {% include "partials/language_switcher.html" %}
+    </div>
+</div>

@@ -1,0 +1,82 @@
+{% extends "dashboard/base.html" %}
+{% load i18n %}
+
+{% block page_title %}{{ page_title }}{% endblock %}
+{% block page_subtitle %}<p class="mt-1 text-sm text-gray-500">{% trans "Manage leadership profiles shown on the Leadership page." %}</p>{% endblock %}
+
+{% block header_actions %}
+{% if can_write %}
+<a href="{% url 'dashboard:team_create' %}" class="rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-white hover:bg-primary-dark">{% trans "Add member" %}</a>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<form method="get" class="mb-6 flex flex-wrap gap-3">
+    <input type="search" name="q" value="{{ request.GET.q }}" placeholder="{% trans 'Search team members...' %}" class="dash-input min-w-[200px] flex-1">
+    <select name="status" class="dash-input w-auto">
+        <option value="">{% trans "All statuses" %}</option>
+        <option value="active" {% if request.GET.status == "active" %}selected{% endif %}>{% trans "Active" %}</option>
+        <option value="inactive" {% if request.GET.status == "inactive" %}selected{% endif %}>{% trans "Inactive" %}</option>
+    </select>
+    <button type="submit" class="rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-bold hover:bg-white">{% trans "Filter" %}</button>
+</form>
+
+<div class="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-100 text-sm">
+            <thead class="bg-gray-50 text-left text-xs font-bold uppercase tracking-wider text-gray-500">
+                <tr>
+                    <th class="px-4 py-3">{% trans "Photo" %}</th>
+                    <th class="px-4 py-3">{% trans "Name" %}</th>
+                    <th class="px-4 py-3">{% trans "Role" %}</th>
+                    <th class="px-4 py-3">{% trans "Order" %}</th>
+                    <th class="px-4 py-3">{% trans "Active" %}</th>
+                    <th class="px-4 py-3 text-right">{% trans "Actions" %}</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-50">
+                {% for member in members %}
+                <tr class="hover:bg-gray-50/50">
+                    <td class="px-4 py-3">
+                        {% if member.photo %}
+                        <img src="{{ member.photo.url }}" alt="" class="h-12 w-12 rounded-full object-cover ring-1 ring-gray-200">
+                        {% elif member.external_photo_url %}
+                        <img src="{{ member.external_photo_url }}" alt="" class="h-12 w-12 rounded-full object-cover ring-1 ring-gray-200">
+                        {% else %}
+                        <div class="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">{{ member.name|first }}</div>
+                        {% endif %}
+                    </td>
+                    <td class="px-4 py-3 font-semibold text-ink">{{ member.name }}</td>
+                    <td class="px-4 py-3 text-gray-600">{{ member.role }}</td>
+                    <td class="px-4 py-3">{{ member.order }}</td>
+                    <td class="px-4 py-3">
+                        {% if member.is_active %}<span class="font-medium text-green-600">{% trans "Yes" %}</span>{% else %}<span class="text-gray-400">{% trans "No" %}</span>{% endif %}
+                    </td>
+                    <td class="px-4 py-3 text-right">
+                        <div class="flex flex-wrap justify-end gap-2">
+                            <a href="{% url 'dashboard:team_edit' member.pk %}" class="text-xs font-bold text-primary">{% trans "Edit" %}</a>
+                            {% if can_write %}
+                            <form method="post" action="{% url 'dashboard:team_toggle_active' member.pk %}" class="inline">
+                                {% csrf_token %}
+                                <button type="submit" class="text-xs font-bold text-heading-blue">
+                                    {% if member.is_active %}{% trans "Deactivate" %}{% else %}{% trans "Activate" %}{% endif %}
+                                </button>
+                            </form>
+                            <form method="post" action="{% url 'dashboard:team_delete' member.pk %}" class="inline" onsubmit="return confirm('{% trans "Delete this team member?" %}')">
+                                {% csrf_token %}
+                                <button type="submit" class="text-xs font-bold text-red-600">{% trans "Delete" %}</button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="px-4 py-16 text-center text-gray-500">{% trans "No team members yet." %}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

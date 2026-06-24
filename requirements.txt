@@ -1,0 +1,17 @@
+Django>=5.0,<6.0
+django-modeltranslation>=0.20
+django-ckeditor>=6.0
+django-crispy-forms>=2.0
+crispy-tailwind>=1.0
+django-htmx>=1.0
+django-environ>=0.10
+django-filter>=25.0
+django-extensions>=3.2
+django-debug-toolbar>=4.0
+Pillow>=10.0
+mysqlclient>=2.2
+gunicorn>=21.0
+whitenoise>=6.0
+psycopg2-binary>=2.9
+requests>=2.32
+bleach>=6.2

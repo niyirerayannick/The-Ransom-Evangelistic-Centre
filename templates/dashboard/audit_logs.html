@@ -1,0 +1,15 @@
+{% extends "dashboard/base.html" %}
+{% load i18n %}
+
+{% block page_title %}{% trans "Audit Logs" %}{% endblock %}
+
+{% block content %}
+<div class="rounded-2xl border border-dashed border-gray-300 bg-white p-12 text-center">
+    <p class="text-4xl">📋</p>
+    <h2 class="mt-4 text-lg font-bold">{% trans "Audit logging not yet configured" %}</h2>
+    <p class="mx-auto mt-2 max-w-md text-sm text-gray-500">{% trans "User actions and content changes can be tracked here once an audit log model is enabled. Superusers can use Django Admin for now." %}</p>
+    {% if request.user.is_superuser %}
+    <a href="{% url 'admin:index' %}" class="mt-6 inline-flex rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-white">{% trans "Open Django Admin" %}</a>
+    {% endif %}
+</div>
+{% endblock %}

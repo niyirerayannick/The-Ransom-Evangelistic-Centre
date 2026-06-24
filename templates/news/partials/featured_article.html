@@ -1,0 +1,40 @@
+{% load i18n %}
+<article class="group overflow-hidden border border-gray-100 bg-white shadow-soft">
+    <div class="grid md:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
+        <a href="{{ post.get_absolute_url }}" class="relative block min-h-[280px] overflow-hidden bg-gradient-to-br from-primary/10 via-paper to-gray-200 md:min-h-[360px]">
+            {% if post.featured_image %}
+            <img src="{{ post.featured_image.url }}" alt="{{ post.title_for_language }}" class="h-full w-full object-cover transition duration-500 group-hover:scale-105">
+            {% else %}
+            <div class="flex h-full min-h-[280px] items-center justify-center md:min-h-[360px]">
+                <span class="text-6xl font-bold text-primary/25 newspaper-heading">{{ post.title_for_language|first }}</span>
+            </div>
+            {% endif %}
+            <div class="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent md:hidden"></div>
+        </a>
+        <div class="flex flex-col justify-center p-6 sm:p-8 md:p-10">
+            {% if post.category %}
+            <span class="inline-flex w-fit bg-primary px-3 py-1 text-[10px] font-bold uppercase tracking-[.14em] text-white">{{ post.category.name }}</span>
+            {% endif %}
+            <h2 class="mt-4 text-2xl font-bold leading-tight text-ink sm:text-3xl newspaper-heading">
+                <a href="{{ post.get_absolute_url }}" class="transition hover:text-heading-blue">{{ post.title_for_language }}</a>
+            </h2>
+            {% if post.excerpt_for_language %}
+            <p class="mt-4 line-clamp-4 text-sm leading-relaxed text-gray-600 sm:text-base">{{ post.excerpt_for_language|striptags }}</p>
+            {% endif %}
+            <div class="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-gray-500">
+                {% if post.author %}
+                <span>{% trans "By" %} <a href="{% url 'news:author_posts' post.author.username %}" class="font-semibold text-ink hover:text-primary">{{ post.author.get_full_name|default:post.author.username }}</a></span>
+                {% endif %}
+                {% if post.published_at %}
+                <time datetime="{{ post.published_at|date:'c' }}">{{ post.published_at|date:"F j, Y" }}</time>
+                {% endif %}
+                {% if post.reading_time %}
+                <span>{{ post.reading_time }} {% trans "min read" %}</span>
+                {% endif %}
+            </div>
+            <a href="{{ post.get_absolute_url }}" class="mt-7 inline-flex w-fit items-center gap-2 rounded-full bg-primary px-7 py-3 text-xs font-bold uppercase tracking-[.12em] text-white transition hover:bg-primary-dark">
+                {% trans "Read More" %}
+            </a>
+        </div>
+    </div>
+</article>

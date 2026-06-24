@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Author" %}: {{ author.get_full_name|default:author.username }} - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container-custom py-8">
+    <div class="flex items-center space-x-4 mb-8">
+        {% if author.profile_image %}
+        <img src="{{ author.profile_image.url }}" alt="{{ author.get_full_name }}" class="w-20 h-20 rounded-full object-cover">
+        {% endif %}
+        <div>
+            <h1 class="text-3xl font-bold">{{ author.get_full_name|default:author.username }}</h1>
+            {% if author.bio %}<p class="text-gray-600">{{ author.bio }}</p>{% endif %}
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for post in posts %}
+        <article class="card group">
+            <a href="{{ post.get_absolute_url }}">
+                {% if post.featured_image %}<img src="{{ post.featured_image.url }}" alt="{{ post.title_for_language }}" class="w-full h-44 object-cover group-hover:scale-105 transition">{% endif %}
+            </a>
+            <div class="p-4">
+                <h2 class="font-bold line-clamp-2 group-hover:text-blue-700"><a href="{{ post.get_absolute_url }}">{{ post.title_for_language }}</a></h2>
+                <span class="text-xs text-gray-500">{{ post.published_at|date:"M d, Y" }}</span>
+            </div>
+        </article>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

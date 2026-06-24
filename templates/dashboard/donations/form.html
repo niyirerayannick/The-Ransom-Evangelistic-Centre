@@ -1,0 +1,37 @@
+{% extends "dashboard/base.html" %}
+{% load i18n %}
+
+{% block page_title %}{% if is_create %}{% trans "Add" %} {{ object_label }}{% else %}{% trans "Edit" %} {{ object_label }}{% endif %}{% endblock %}
+{% block page_subtitle %}<p class="mt-1 text-sm text-gray-500"><a href="{{ list_url }}" class="text-primary hover:underline">← {% trans "Back" %}</a></p>{% endblock %}
+
+{% block content %}
+<div class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+    <form method="post" enctype="multipart/form-data" class="space-y-6" x-data="{ tab: '{% if has_i18n %}en{% else %}general{% endif %}' }">
+        {% csrf_token %}
+        {% if has_i18n %}
+        <div class="flex flex-wrap gap-1 border-b border-gray-100 pb-3">
+            <button type="button" @click="tab = 'en'" :class="tab === 'en' ? 'bg-primary text-white' : 'bg-gray-100'" class="rounded-lg px-4 py-2 text-sm font-bold">English</button>
+            <button type="button" @click="tab = 'fr'" :class="tab === 'fr' ? 'bg-primary text-white' : 'bg-gray-100'" class="rounded-lg px-4 py-2 text-sm font-bold">Français</button>
+            <button type="button" @click="tab = 'rw'" :class="tab === 'rw' ? 'bg-primary text-white' : 'bg-gray-100'" class="rounded-lg px-4 py-2 text-sm font-bold">Kinyarwanda</button>
+            <button type="button" @click="tab = 'general'" :class="tab === 'general' ? 'bg-primary text-white' : 'bg-gray-100'" class="rounded-lg px-4 py-2 text-sm font-bold">{% trans "General" %}</button>
+        </div>
+        {% endif %}
+        {% for field in form %}
+        {% if field.name|slice:"-3:" == "_en" %}
+        <div x-show="tab === 'en'" x-cloak><label class="mb-1 block text-sm font-medium">{{ field.label }}</label>{{ field }}{% if field.errors %}<p class="text-xs text-red-600">{{ field.errors.0 }}</p>{% endif %}</div>
+        {% elif field.name|slice:"-3:" == "_fr" %}
+        <div x-show="tab === 'fr'" x-cloak><label class="mb-1 block text-sm font-medium">{{ field.label }}</label>{{ field }}{% if field.errors %}<p class="text-xs text-red-600">{{ field.errors.0 }}</p>{% endif %}</div>
+        {% elif field.name|slice:"-3:" == "_rw" %}
+        <div x-show="tab === 'rw'" x-cloak><label class="mb-1 block text-sm font-medium">{{ field.label }}</label>{{ field }}{% if field.errors %}<p class="text-xs text-red-600">{{ field.errors.0 }}</p>{% endif %}</div>
+        {% else %}
+        <div x-show="tab === 'general'" x-cloak>
+            <label class="mb-1 block text-sm font-medium">{{ field.label }}</label>
+            {% if field.field.widget.input_type == "checkbox" %}<label class="flex items-center gap-2">{{ field }} {{ field.label }}</label>{% else %}{{ field }}{% endif %}
+            {% if field.errors %}<p class="text-xs text-red-600">{{ field.errors.0 }}</p>{% endif %}
+        </div>
+        {% endif %}
+        {% endfor %}
+        {% if can_write %}<button type="submit" class="rounded-xl bg-primary px-6 py-2.5 text-sm font-bold text-white hover:bg-primary-dark">{% trans "Save" %}</button>{% endif %}
+    </form>
+</div>
+{% endblock %}

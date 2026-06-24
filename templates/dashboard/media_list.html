@@ -1,0 +1,58 @@
+{% extends "dashboard/base.html" %}
+{% load i18n %}
+
+{% block page_title %}{% trans "Media Library" %}{% endblock %}
+{% block page_subtitle %}<p class="text-sm text-gray-500">{% trans "Upload images and files for use in your articles." %}</p>{% endblock %}
+
+{% block content %}
+<div class="grid gap-8 lg:grid-cols-[360px_1fr]">
+    <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+        <h2 class="mb-4 text-sm font-bold uppercase tracking-wider text-gray-500">{% trans "Upload File" %}</h2>
+        <form method="post" enctype="multipart/form-data" class="space-y-4">
+            {% csrf_token %}
+            {% for field in form %}
+            <div>
+                <label class="mb-1 block text-xs font-bold uppercase tracking-wider text-gray-500">{{ field.label }}</label>
+                {{ field }}
+                {% if field.errors %}<p class="mt-1 text-xs text-red-600">{{ field.errors.0 }}</p>{% endif %}
+            </div>
+            {% endfor %}
+            <button type="submit" class="w-full rounded-lg bg-primary px-4 py-2.5 text-sm font-bold text-white hover:bg-primary-dark">{% trans "Upload" %}</button>
+        </form>
+        <p class="mt-4 text-xs text-gray-400">{% trans "Copy image URLs from uploaded files into the CKEditor content area." %}</p>
+    </div>
+
+    <div>
+        <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            {% for item in media_items %}
+            <div class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+                {% if item.file_type == "image" %}
+                <img src="{{ item.file.url }}" alt="{{ item.alt_text }}" class="h-40 w-full object-cover">
+                {% else %}
+                <div class="flex h-40 items-center justify-center bg-gray-100 text-4xl">📄</div>
+                {% endif %}
+                <div class="p-4">
+                    <p class="font-medium">{{ item.title }}</p>
+                    <p class="mt-1 text-xs text-gray-400">{{ item.created_at|date:"M j, Y" }} · {{ item.get_file_type_display }}</p>
+                    <input type="text" readonly value="{{ request.scheme }}://{{ request.get_host }}{{ item.file.url }}" class="mt-2 w-full rounded border border-gray-100 bg-gray-50 px-2 py-1 text-[10px]" onclick="this.select()">
+                    {% if item.uploaded_by %}<p class="mt-2 text-[10px] text-gray-400">{{ item.uploaded_by }}</p>{% endif %}
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-span-full rounded-xl border border-dashed border-gray-200 p-12 text-center text-gray-500">
+                {% trans "No media uploaded yet." %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<style>
+    input[type="text"], input[type="url"], select, textarea {
+        width: 100%; border-radius: 0.5rem; border: 1px solid #e5e7eb; padding: 0.625rem 0.875rem; font-size: 0.875rem;
+    }
+    input[type="file"] { font-size: 0.75rem; }
+</style>
+{% endblock %}

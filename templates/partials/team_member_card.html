@@ -1,0 +1,25 @@
+{% load i18n %}
+<article class="group flex h-full flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-soft">
+    <button type="button" class="block text-left" @click="openMember({{ member.id }})">
+        <div class="relative aspect-[4/5] overflow-hidden bg-gradient-to-br from-primary/10 via-paper to-gray-200">
+            {% if member.photo_display_url %}
+            <img src="{{ member.photo_display_url }}" alt="{{ member.display_name }}" class="h-full w-full object-cover transition duration-500 group-hover:scale-105">
+            {% else %}
+            <div class="flex h-full items-center justify-center text-5xl font-bold text-primary/30 newspaper-heading">{{ member.display_name|first }}</div>
+            {% endif %}
+            <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/55 to-transparent p-4 pt-16">
+                <p class="text-lg font-bold text-white newspaper-heading">{{ member.display_name }}</p>
+                <p class="text-sm font-medium text-primary">{{ member.display_role }}</p>
+            </div>
+        </div>
+    </button>
+    <div class="flex flex-1 flex-col p-5">
+        {% if show_translation_warnings and member.translation_missing %}
+        <span class="mb-2 inline-flex w-fit rounded-full bg-amber-100 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-amber-800">{{ member.translation_missing_label }}</span>
+        {% endif %}
+        <p class="line-clamp-3 flex-1 text-sm leading-relaxed text-gray-600">{{ member.display_bio_plain|truncatechars:160 }}</p>
+        <button type="button" @click="openMember({{ member.id }})" class="mt-4 inline-flex w-fit items-center gap-2 rounded-full bg-primary px-5 py-2 text-xs font-bold uppercase tracking-wider text-white transition hover:bg-primary-dark">
+            {% trans "View Profile" %}
+        </button>
+    </div>
+</article>

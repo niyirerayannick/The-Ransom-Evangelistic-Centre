@@ -1,0 +1,6 @@
+{% load i18n %}
+{% for lang, info in post.translation_status.items %}
+<span class="inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-bold {% if info.complete %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-700{% endif %}" title="{{ info.label }}: {% if info.complete %}{% trans 'Complete' %}{% else %}{% trans 'Missing' %}{% endif %}">
+    {% if lang == "en" %}EN{% elif lang == "fr" %}FR{% else %}RW{% endif %}
+</span>
+{% endfor %}

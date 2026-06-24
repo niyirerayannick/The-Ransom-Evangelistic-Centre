@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Search" %} - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container-custom py-8">
+    <h1 class="section-title">{% trans "Search" %}</h1>
+    <form action="{% url 'search:search' %}" method="get" class="max-w-2xl mx-auto mb-8">
+        <div class="flex space-x-3">
+            <input type="text" name="q" value="{{ query }}" placeholder="{% trans 'Search articles, pages...' %}" class="form-input flex-1" required>
+            <button type="submit" class="btn-primary">{% trans "Search" %}</button>
+        </div>
+    </form>
+
+    {% if query %}
+    <p class="text-gray-600 mb-6">{% trans "Found" %} {{ total_results }} {% trans "result(s) for" %} "{{ query }}"</p>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div>
+            <h2 class="text-xl font-bold mb-4">{% trans "Posts" %}</h2>
+            {% for post in posts %}
+            <div class="card p-4 mb-4">
+                <a href="{{ post.get_absolute_url }}" class="font-semibold hover:text-blue-700">{{ post.title_for_language }}</a>
+                <p class="text-sm text-gray-600 line-clamp-2">{{ post.excerpt|default:post.content|striptags|truncatewords:30 }}</p>
+            </div>
+            {% empty %}
+            <p class="text-gray-500">{% trans "No posts found." %}</p>
+            {% endfor %}
+        </div>
+
+        <div>
+            <h2 class="text-xl font-bold mb-4">{% trans "Pages" %}</h2>
+            {% for page in pages %}
+            <div class="card p-4 mb-4">
+                <a href="{{ page.get_absolute_url }}" class="font-semibold hover:text-blue-700">{{ page.title }}</a>
+                <p class="text-sm text-gray-600 line-clamp-2">{{ page.content|striptags|truncatewords:30 }}</p>
+            </div>
+            {% empty %}
+            <p class="text-gray-500">{% trans "No pages found." %}</p>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

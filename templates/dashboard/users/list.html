@@ -1,0 +1,83 @@
+{% extends "dashboard/base.html" %}
+{% load i18n %}
+
+{% block page_title %}{% trans "Users" %}{% endblock %}
+{% block page_subtitle %}<p class="mt-1 text-sm text-gray-500">{% trans "Manage dashboard users and roles." %}</p>{% endblock %}
+
+{% block header_actions %}
+<a href="{% url 'dashboard:user_create' %}" class="rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-white hover:bg-primary-dark">{% trans "Create User" %}</a>
+{% endblock %}
+
+{% block content %}
+<form method="get" class="mb-6 flex flex-wrap gap-3 rounded-2xl border border-gray-200 bg-white p-4">
+    <input type="search" name="q" value="{{ request.GET.q }}" placeholder="{% trans 'Search users...' %}" class="dash-input min-w-[200px] flex-1">
+    <select name="role" class="dash-input w-auto">
+        <option value="">{% trans "All roles" %}</option>
+        <option value="super_admin" {% if request.GET.role == "super_admin" %}selected{% endif %}>{% trans "Super Admin" %}</option>
+        <option value="admin" {% if request.GET.role == "admin" %}selected{% endif %}>{% trans "Admin" %}</option>
+        <option value="editor" {% if request.GET.role == "editor" %}selected{% endif %}>{% trans "Editor" %}</option>
+        <option value="author" {% if request.GET.role == "author" %}selected{% endif %}>{% trans "Author" %}</option>
+        <option value="viewer" {% if request.GET.role == "viewer" %}selected{% endif %}>{% trans "Viewer" %}</option>
+    </select>
+    <select name="status" class="dash-input w-auto">
+        <option value="">{% trans "All statuses" %}</option>
+        <option value="active" {% if request.GET.status == "active" %}selected{% endif %}>{% trans "Active" %}</option>
+        <option value="inactive" {% if request.GET.status == "inactive" %}selected{% endif %}>{% trans "Inactive" %}</option>
+    </select>
+    <button type="submit" class="rounded-xl bg-gray-800 px-4 py-2.5 text-sm font-bold text-white">{% trans "Filter" %}</button>
+</form>
+
+<div class="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-100 text-sm">
+            <thead class="bg-gray-50 text-left text-xs font-bold uppercase tracking-wider text-gray-500">
+                <tr>
+                    <th class="px-4 py-3">{% trans "Name" %}</th>
+                    <th class="px-4 py-3">{% trans "Email" %}</th>
+                    <th class="px-4 py-3">{% trans "Username" %}</th>
+                    <th class="px-4 py-3">{% trans "Role" %}</th>
+                    <th class="px-4 py-3">{% trans "Status" %}</th>
+                    <th class="px-4 py-3">{% trans "Joined" %}</th>
+                    <th class="px-4 py-3">{% trans "Last login" %}</th>
+                    <th class="px-4 py-3 text-right">{% trans "Actions" %}</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-50">
+                {% for u in users %}
+                <tr class="hover:bg-gray-50/50">
+                    <td class="px-4 py-3 font-medium">{{ u.get_full_name|default:"—" }}</td>
+                    <td class="px-4 py-3 text-gray-500">{{ u.email|default:"—" }}</td>
+                    <td class="px-4 py-3">{{ u.username }}</td>
+                    <td class="px-4 py-3"><span class="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-bold text-primary">{{ u.get_role_display }}</span></td>
+                    <td class="px-4 py-3">
+                        {% if u.is_active %}<span class="text-green-600">{% trans "Active" %}</span>{% else %}<span class="text-red-600">{% trans "Inactive" %}</span>{% endif %}
+                    </td>
+                    <td class="px-4 py-3 text-gray-500">{{ u.date_joined|date:"M j, Y" }}</td>
+                    <td class="px-4 py-3 text-gray-500">{{ u.last_login|date:"M j, Y H:i"|default:"—" }}</td>
+                    <td class="px-4 py-3">
+                        <div class="flex flex-wrap justify-end gap-2">
+                            <a href="{% url 'dashboard:user_edit' u.pk %}" class="text-xs font-bold text-primary">{% trans "Edit" %}</a>
+                            <form method="post" action="{% url 'dashboard:user_toggle_active' u.pk %}" class="inline">{% csrf_token %}<button class="text-xs font-bold text-gray-600">{% if u.is_active %}{% trans "Deactivate" %}{% else %}{% trans "Activate" %}{% endif %}</button></form>
+                            <form method="post" action="{% url 'dashboard:user_reset_password' u.pk %}" class="inline">{% csrf_token %}<button class="text-xs font-bold text-amber-600">{% trans "Reset password" %}</button></form>
+                            {% if request.user.is_superuser and u.pk != request.user.pk %}
+                            <form method="post" action="{% url 'dashboard:user_delete' u.pk %}" class="inline" onsubmit="return confirm('{% trans "Delete this user?" %}')">{% csrf_token %}<button class="text-xs font-bold text-red-600">{% trans "Delete" %}</button></form>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="8" class="px-4 py-16 text-center text-gray-500">{% trans "No users found." %}</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if is_paginated %}
+<nav class="mt-6 flex justify-center gap-2">
+    {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}&q={{ request.GET.q }}&role={{ request.GET.role }}&status={{ request.GET.status }}" class="rounded-lg border px-3 py-1 text-sm">{% trans "Previous" %}</a>{% endif %}
+    <span class="px-3 py-1 text-sm text-gray-500">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}&q={{ request.GET.q }}&role={{ request.GET.role }}&status={{ request.GET.status }}" class="rounded-lg border px-3 py-1 text-sm">{% trans "Next" %}</a>{% endif %}
+</nav>
+{% endif %}
+{% endblock %}

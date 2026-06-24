@@ -1,0 +1,31 @@
+{% load i18n page_i18n %}
+<nav class="flex items-center gap-2 sm:gap-3" aria-label="{% trans 'Languages' %}">
+    {% language_switcher_links as lang_links %}
+    {% for link in lang_links %}
+    {% if link.available %}
+    <a href="{{ link.url }}"
+       lang="{{ link.code }}"
+       title="{{ link.label }}"
+       aria-label="{{ link.label }}"
+       class="group flex items-center rounded-md p-0.5 transition {% if LANGUAGE_CODE == link.code %}ring-2 ring-white/90 ring-offset-1 ring-offset-primary{% else %}opacity-85 hover:opacity-100{% endif %}">
+        <img src="{{ link.flag_url }}"
+             alt=""
+             width="28"
+             height="20"
+             class="h-5 w-7 rounded-sm object-cover shadow-sm ring-1 ring-black/10"
+             loading="lazy">
+    </a>
+    {% else %}
+    <span lang="{{ link.code }}"
+          title="{% trans 'Not available in this language' %}: {{ link.label }}"
+          class="cursor-not-allowed rounded-md p-0.5 opacity-35 grayscale">
+        <img src="{{ link.flag_url }}"
+             alt=""
+             width="28"
+             height="20"
+             class="h-5 w-7 rounded-sm object-cover ring-1 ring-black/10"
+             loading="lazy">
+    </span>
+    {% endif %}
+    {% endfor %}
+</nav>

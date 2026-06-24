@@ -1,0 +1,27 @@
+<article class="overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-xl">
+    <div class="grid lg:grid-cols-[minmax(280px,360px)_1fr]">
+        <div class="relative bg-paper">
+            {% if counsellor.photo_url %}
+            <img src="{{ counsellor.photo_url }}" alt="{{ counsellor.name }}" class="h-full min-h-[320px] w-full object-cover object-top lg:min-h-full">
+            {% else %}
+            <div class="flex min-h-[320px] flex-col items-center justify-center bg-gradient-to-br from-primary/10 to-paper p-10 lg:min-h-full">
+                <div class="flex h-32 w-32 items-center justify-center rounded-full bg-primary/15 text-4xl font-bold text-primary">{{ counselling_ui.placeholder_initials }}</div>
+            </div>
+            {% endif %}
+        </div>
+        <div class="flex flex-col justify-center p-7 sm:p-10">
+            <span class="text-[10px] font-bold uppercase tracking-[.2em] text-primary">REC Counsellor</span>
+            <h2 class="mt-3 text-3xl font-bold text-ink newspaper-heading">{{ counsellor.name }}</h2>
+            <p class="mt-2 text-sm font-bold uppercase tracking-wider text-heading-blue">{{ counsellor.role }}</p>
+            <div class="page-copy mt-5 max-h-56 overflow-y-auto text-sm leading-relaxed text-gray-600 lg:max-h-none">
+                {{ counsellor.bio_html|safe }}
+            </div>
+            <div class="mt-8 flex flex-wrap gap-3">
+                <a href="#booking" class="rounded-full bg-primary px-7 py-3 text-xs font-bold uppercase tracking-wider text-white hover:bg-primary-dark">{{ counselling_ui.book_now }}</a>
+                {% if counsellor.phone %}
+                <a href="tel:{{ counsellor.phone|cut:' ' }}" class="rounded-full border border-gray-200 px-7 py-3 text-xs font-bold uppercase tracking-wider text-ink hover:border-primary hover:text-primary">{{ counselling_ui.call_now }}</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</article>

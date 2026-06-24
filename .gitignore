@@ -1,0 +1,13 @@
+*.pyc
+__pycache__/
+*.pyo
+venv/
+.env
+db.sqlite3
+media/uploads/
+media/posts/
+staticfiles/
+static/src/output.css
+*.log
+.DS_Store
+Thumbs.db

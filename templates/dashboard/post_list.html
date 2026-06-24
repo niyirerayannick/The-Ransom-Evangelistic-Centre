@@ -1,0 +1,94 @@
+{% extends "dashboard/base.html" %}
+{% load i18n dashboard_tags %}
+
+{% block page_title %}{% trans "Posts" %}{% endblock %}
+
+{% block header_actions %}
+<a href="{% url 'dashboard:post_create' %}" class="rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white hover:bg-primary-dark">{% trans "New Post" %}</a>
+{% endblock %}
+
+{% block content %}
+<form method="get" class="mb-6 flex flex-wrap items-center gap-3">
+    <input type="search" name="q" value="{{ request.GET.q }}" placeholder="{% trans 'Search posts...' %}" class="rounded-lg border border-gray-200 px-4 py-2 text-sm outline-none focus:border-primary">
+    <select name="status" class="rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-primary" onchange="this.form.submit()">
+        <option value="">{% trans "All statuses" %}</option>
+        <option value="draft" {% if request.GET.status == "draft" %}selected{% endif %}>{% trans "Draft" %}</option>
+        <option value="pending_review" {% if request.GET.status == "pending_review" %}selected{% endif %}>{% trans "Pending Review" %}</option>
+        <option value="published" {% if request.GET.status == "published" %}selected{% endif %}>{% trans "Published" %}</option>
+        <option value="rejected" {% if request.GET.status == "rejected" %}selected{% endif %}>{% trans "Rejected" %}</option>
+        <option value="archived" {% if request.GET.status == "archived" %}selected{% endif %}>{% trans "Archived" %}</option>
+    </select>
+    <button type="submit" class="rounded-lg border border-gray-200 px-4 py-2 text-sm font-bold hover:bg-white">{% trans "Filter" %}</button>
+</form>
+
+<div class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-100 text-sm">
+            <thead class="bg-gray-50 text-left text-xs font-bold uppercase tracking-wider text-gray-500">
+                <tr>
+                    <th class="px-4 py-3">{% trans "Title" %}</th>
+                    <th class="px-4 py-3">{% trans "Category" %}</th>
+                    <th class="px-4 py-3">{% trans "Languages" %}</th>
+                    <th class="px-4 py-3">{% trans "Status" %}</th>
+                    <th class="px-4 py-3">{% trans "Created" %}</th>
+                    <th class="px-4 py-3">{% trans "Updated" %}</th>
+                    <th class="px-4 py-3 text-right">{% trans "Actions" %}</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-50">
+                {% for post in posts %}
+                <tr class="hover:bg-gray-50/50">
+                    <td class="px-4 py-3">
+                        <p class="font-medium">{{ post.title_en|default:post.title|truncatechars:50 }}</p>
+                        {% if post.author and request.user.is_admin_role or post.author and request.user.role == "editor" %}
+                        <p class="text-xs text-gray-400">{{ post.author }}</p>
+                        {% endif %}
+                    </td>
+                    <td class="px-4 py-3 text-gray-500">{{ post.category.name|default:"—" }}</td>
+                    <td class="px-4 py-3">
+                        <div class="flex flex-wrap gap-1">{% include "dashboard/partials/language_badges.html" %}</div>
+                    </td>
+                    <td class="px-4 py-3">{% include "dashboard/partials/status_badge.html" with status=post.status %}</td>
+                    <td class="px-4 py-3 text-gray-500">{{ post.created_at|date:"M j, Y" }}</td>
+                    <td class="px-4 py-3 text-gray-500">{{ post.updated_at|date:"M j, Y" }}</td>
+                    <td class="px-4 py-3">
+                        <div class="flex flex-wrap justify-end gap-2">
+                            <a href="{% url 'dashboard:post_edit' post.pk %}" class="text-xs font-bold text-primary hover:underline">{% trans "Edit" %}</a>
+                            <a href="{% url 'dashboard:post_preview' post.pk %}" class="text-xs font-bold text-gray-500 hover:underline">{% trans "Preview" %}</a>
+                            {% if post.status == "draft" or post.status == "rejected" %}
+                            <form method="post" action="{% url 'dashboard:post_submit' post.pk %}" class="inline">
+                                {% csrf_token %}
+                                <button type="submit" class="text-xs font-bold text-amber-600 hover:underline">{% trans "Submit" %}</button>
+                            </form>
+                            {% endif %}
+                            {% if request.user|can_delete_post:post %}
+                            {% if post.status == "draft" %}
+                            <form method="post" action="{% url 'dashboard:post_delete' post.pk %}" class="inline" onsubmit="return confirm('{% trans "Delete this draft?" %}')">
+                                {% csrf_token %}
+                                <button type="submit" class="text-xs font-bold text-red-600 hover:underline">{% trans "Delete" %}</button>
+                            </form>
+                            {% endif %}
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="7" class="px-4 py-12 text-center text-gray-500">{% trans "No posts found." %}</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if is_paginated %}
+<nav class="mt-6 flex justify-center gap-2">
+    {% if page_obj.has_previous %}
+    <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}" class="rounded-lg border px-3 py-1 text-sm">{% trans "Previous" %}</a>
+    {% endif %}
+    <span class="px-3 py-1 text-sm text-gray-500">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}
+    <a href="?page={{ page_obj.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}" class="rounded-lg border px-3 py-1 text-sm">{% trans "Next" %}</a>
+    {% endif %}
+</nav>
+{% endif %}
+{% endblock %}

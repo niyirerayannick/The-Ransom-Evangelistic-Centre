@@ -1,0 +1,30 @@
+{% load i18n %}
+{% if is_paginated and page_obj.paginator.num_pages > 1 %}
+<nav class="mt-10 flex flex-wrap items-center justify-center gap-2" aria-label="{% trans 'Pagination' %}">
+    {% if page_obj.has_previous %}
+    <a href="?page={{ page_obj.previous_page_number }}" class="rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-ink transition hover:border-primary hover:text-primary">
+        ← {% trans "Previous" %}
+    </a>
+    {% else %}
+    <span class="rounded-full border border-gray-100 bg-gray-50 px-4 py-2 text-sm font-semibold text-gray-300">← {% trans "Previous" %}</span>
+    {% endif %}
+
+    {% for num in page_obj.paginator.page_range %}
+        {% if num == page_obj.number %}
+        <span class="flex h-10 min-w-10 items-center justify-center rounded-full bg-primary px-3 text-sm font-bold text-white" aria-current="page">{{ num }}</span>
+        {% elif num == 1 or num == page_obj.paginator.num_pages or num >= page_obj.number|add:"-2" and num <= page_obj.number|add:"2" %}
+        <a href="?page={{ num }}" class="flex h-10 min-w-10 items-center justify-center rounded-full border border-gray-200 bg-white px-3 text-sm font-semibold text-ink transition hover:border-primary hover:text-primary">{{ num }}</a>
+        {% elif num == page_obj.number|add:"-3" or num == page_obj.number|add:"3" %}
+        <span class="px-1 text-gray-400">…</span>
+        {% endif %}
+    {% endfor %}
+
+    {% if page_obj.has_next %}
+    <a href="?page={{ page_obj.next_page_number }}" class="rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-ink transition hover:border-primary hover:text-primary">
+        {% trans "Next" %} →
+    </a>
+    {% else %}
+    <span class="rounded-full border border-gray-100 bg-gray-50 px-4 py-2 text-sm font-semibold text-gray-300">{% trans "Next" %} →</span>
+    {% endif %}
+</nav>
+{% endif %}

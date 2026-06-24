@@ -1,0 +1,32 @@
+{% extends "dashboard/base.html" %}
+{% load i18n %}
+
+{% block page_title %}{% trans "Roles & Permissions" %}{% endblock %}
+
+{% block content %}
+<div class="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+    <table class="min-w-full text-sm">
+        <thead class="bg-gray-50 text-left text-xs font-bold uppercase tracking-wider text-gray-500">
+            <tr>
+                <th class="px-4 py-3">{% trans "Role" %}</th>
+                <th class="px-4 py-3">{% trans "Accessible Modules" %}</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-50">
+            {% for role, modules in role_matrix %}
+            <tr>
+                <td class="px-4 py-3 font-bold capitalize">{{ role|cut:"_" }}</td>
+                <td class="px-4 py-3">
+                    <div class="flex flex-wrap gap-1">
+                        {% for mod in modules %}
+                        <span class="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">{{ mod }}</span>
+                        {% endfor %}
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+<p class="mt-4 text-sm text-gray-500">{% trans "Super Admins also have access to Django Admin for advanced configuration." %}</p>
+{% endblock %}

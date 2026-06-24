@@ -1,0 +1,79 @@
+{% load i18n %}
+<aside class="space-y-8">
+    <section class="border border-gray-100 bg-white p-5 shadow-sm">
+        <h2 class="rule-title mb-4 text-lg font-bold newspaper-heading">{% trans "Search articles" %}</h2>
+        <form action="{% url 'search:search' %}" method="get" class="flex gap-2">
+            <label class="sr-only" for="category-sidebar-search">{% trans "Search" %}</label>
+            <input id="category-sidebar-search" type="search" name="q" placeholder="{% trans 'Search articles…' %}" class="min-w-0 flex-1 border border-gray-200 bg-paper px-4 py-2.5 text-sm outline-none transition focus:border-primary">
+            <button type="submit" class="rounded-full bg-primary px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-white transition hover:bg-primary-dark">{% trans "Go" %}</button>
+        </form>
+    </section>
+
+    <section class="border border-gray-100 bg-paper/60 p-5">
+        <h2 class="rule-title mb-4 text-lg font-bold newspaper-heading">{% trans "Recent Articles" %}</h2>
+        <div class="divide-y divide-gray-200">
+            {% for recent in sidebar_recent_posts %}
+            <article class="group grid grid-cols-[72px_1fr] gap-3 py-3 first:pt-0">
+                <a href="{{ recent.get_absolute_url }}" class="block h-14 overflow-hidden bg-gray-200">
+                    {% if recent.featured_image %}
+                    <img src="{{ recent.featured_image.url }}" alt="" class="h-full w-full object-cover transition group-hover:scale-105">
+                    {% else %}
+                    <div class="flex h-full items-center justify-center bg-gradient-to-br from-paper to-gray-200 text-sm font-bold text-primary/40">{{ recent.title_for_language|first }}</div>
+                    {% endif %}
+                </a>
+                <div>
+                    {% if recent.category %}<span class="text-[9px] font-bold uppercase text-primary">{{ recent.category.name }}</span>{% endif %}
+                    <h3 class="line-clamp-2 text-xs font-bold leading-snug"><a href="{{ recent.get_absolute_url }}" class="hover:text-primary">{{ recent.title_for_language }}</a></h3>
+                    {% if recent.published_at %}<time class="mt-1 block text-[10px] text-gray-400">{{ recent.published_at|date:"M j, Y" }}</time>{% endif %}
+                </div>
+            </article>
+            {% empty %}
+            <p class="text-sm text-gray-500">{% trans "No recent articles." %}</p>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="border border-gray-100 bg-white p-5 shadow-sm">
+        <h2 class="rule-title mb-4 text-lg font-bold newspaper-heading">{% trans "Popular Articles" %}</h2>
+        <ol class="space-y-3">
+            {% for popular in popular_posts %}
+            <li class="flex gap-3">
+                <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">{{ forloop.counter }}</span>
+                <div>
+                    <a href="{{ popular.get_absolute_url }}" class="line-clamp-2 text-sm font-bold leading-snug text-ink hover:text-primary">{{ popular.title_for_language }}</a>
+                    <span class="mt-1 block text-[10px] text-gray-400">{{ popular.views_count }} {% trans "views" %}</span>
+                </div>
+            </li>
+            {% empty %}
+            <li class="text-sm text-gray-500">{% trans "No popular articles yet." %}</li>
+            {% endfor %}
+        </ol>
+    </section>
+
+    <section class="border border-gray-100 bg-white p-5 shadow-sm">
+        <h2 class="rule-title mb-4 text-lg font-bold newspaper-heading">{% trans "Categories" %}</h2>
+        <ul class="space-y-2">
+            {% for item in sidebar_categories %}
+            <li>
+                <a href="{{ item.category.get_absolute_url }}" class="flex items-center justify-between rounded-lg px-3 py-2 text-sm transition {% if item.category.pk == category.pk %}bg-primary/10 font-bold text-primary{% else %}hover:bg-paper text-ink{% endif %}">
+                    <span>{{ item.category.name }}</span>
+                    <span class="rounded-full bg-paper px-2 py-0.5 text-[10px] font-bold text-gray-500">{{ item.count }}</span>
+                </a>
+            </li>
+            {% empty %}
+            <li class="text-sm text-gray-500">{% trans "No categories available." %}</li>
+            {% endfor %}
+        </ul>
+    </section>
+
+    <section class="overflow-hidden rounded-xl bg-[#333333] p-6 text-center text-white">
+        <span class="text-[10px] font-bold uppercase tracking-[.2em] text-primary">{% trans "Stay Updated" %}</span>
+        <h2 class="mt-3 text-xl font-bold newspaper-heading">{% trans "Newsletter" %}</h2>
+        <p class="mt-3 text-sm leading-relaxed text-gray-300">{% trans "Subscribe to receive the latest articles and ministry updates." %}</p>
+        <form action="{% url 'newsletter:subscribe' %}" method="post" class="mt-5 space-y-3">
+            {% csrf_token %}
+            <input type="email" name="email" required placeholder="{% trans 'Your email address' %}" class="w-full rounded-lg border-0 px-4 py-3 text-sm text-ink outline-none focus:ring-2 focus:ring-primary">
+            <button type="submit" class="w-full rounded-full bg-primary px-6 py-3 text-xs font-bold uppercase tracking-wider text-white transition hover:bg-primary-dark">{% trans "Subscribe" %}</button>
+        </form>
+    </section>
+</aside>

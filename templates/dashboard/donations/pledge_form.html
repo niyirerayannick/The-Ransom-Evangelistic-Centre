@@ -1,0 +1,25 @@
+{% extends "dashboard/base.html" %}
+{% load i18n %}
+
+{% block page_title %}{% trans "Edit pledge" %}{% endblock %}
+{% block page_subtitle %}<p class="mt-1 text-sm text-gray-500"><a href="{{ list_url }}" class="text-primary hover:underline">← {% trans "Back to pledges" %}</a></p>{% endblock %}
+
+{% block content %}
+<div class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+    <dl class="mb-6 grid gap-3 rounded-xl bg-paper p-4 text-sm sm:grid-cols-2">
+        <div><dt class="text-xs text-gray-400">{% trans "Submitted" %}</dt><dd>{{ pledge.created_at|date:"M j, Y H:i" }}</dd></div>
+        <div><dt class="text-xs text-gray-400">{% trans "Email" %}</dt><dd>{{ pledge.email|default:"—" }}</dd></div>
+    </dl>
+    <form method="post" class="space-y-4">
+        {% csrf_token %}
+        {% for field in form %}
+        <div>
+            <label class="mb-1 block text-sm font-medium">{{ field.label }}</label>
+            {{ field }}
+            {% if field.errors %}<p class="text-xs text-red-600">{{ field.errors.0 }}</p>{% endif %}
+        </div>
+        {% endfor %}
+        {% if can_write %}<button type="submit" class="rounded-xl bg-primary px-6 py-2.5 text-sm font-bold text-white hover:bg-primary-dark">{% trans "Save" %}</button>{% endif %}
+    </form>
+</div>
+{% endblock %}

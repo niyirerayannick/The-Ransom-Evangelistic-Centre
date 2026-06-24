@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block content %}
+{% include "partials/page_hero.html" with eyebrow="We would love to hear from you" %}
+<section class="bg-paper py-14">
+    <div class="site-container">
+        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <article class="rounded-2xl bg-white p-6 shadow-sm"><span class="text-2xl text-primary">☎</span><h2 class="mt-4 font-bold newspaper-heading">{% trans "Phone" %}</h2><p class="mt-2 text-sm text-gray-600">{{ site_settings.phone_1 }}</p><p class="text-sm text-gray-600">{{ site_settings.phone_2 }}</p></article>
+            <article class="rounded-2xl bg-white p-6 shadow-sm"><span class="text-2xl text-primary">✉</span><h2 class="mt-4 font-bold newspaper-heading">{% trans "Email" %}</h2><a href="mailto:{{ site_settings.email|default:site_settings.contact_email }}" class="mt-2 block break-all text-sm text-heading-blue">{{ site_settings.email|default:site_settings.contact_email }}</a></article>
+            <article class="rounded-2xl bg-white p-6 shadow-sm"><span class="text-2xl text-primary">⌖</span><h2 class="mt-4 font-bold newspaper-heading">{% trans "Location" %}</h2><p class="mt-2 text-sm text-gray-600">{{ site_settings.address_line_1 }}</p><p class="text-sm text-gray-600">{{ site_settings.address_line_2 }}</p></article>
+            <article class="rounded-2xl bg-white p-6 shadow-sm"><span class="text-2xl text-primary">◷</span><h2 class="mt-4 font-bold newspaper-heading">{% trans "Working hours" %}</h2><p class="mt-2 text-sm text-gray-600">{% trans "Monday–Friday" %}<br>8:00–17:00</p></article>
+        </div>
+
+        <div class="mt-10 grid overflow-hidden rounded-3xl bg-white shadow-xl lg:grid-cols-[1.1fr_.9fr]">
+            <div class="p-7 sm:p-10">
+                <span class="text-xs font-bold uppercase tracking-[.2em] text-primary">{% trans "Send a message" %}</span>
+                <h2 class="mt-3 text-3xl font-bold newspaper-heading">{% trans "How can we help?" %}</h2>
+                <form method="post" class="mt-7" novalidate>
+                    {% csrf_token %}
+                    <div class="grid gap-5 sm:grid-cols-2">
+                        {% for field in form %}
+                        <label class="{% if field.name == 'subject' or field.name == 'message' %}sm:col-span-2{% endif %} text-xs font-bold uppercase tracking-wider text-gray-500">{{ field.label }}{{ field }}{% for error in field.errors %}<span class="mt-1 block text-xs normal-case text-red-600">{{ error }}</span>{% endfor %}</label>
+                        {% endfor %}
+                    </div>
+                    <button class="mt-6 rounded-full bg-primary px-8 py-3.5 text-xs font-bold text-white hover:bg-primary-dark">{% if LANGUAGE_CODE == "fr" %}ENVOYER LE MESSAGE{% elif LANGUAGE_CODE == "rw" %}OHEREZA UBUTUMWA{% else %}SEND MESSAGE{% endif %}</button>
+                </form>
+            </div>
+            <aside class="relative min-h-[420px] overflow-hidden bg-heading-blue p-8 text-white">
+                <div class="absolute inset-0 opacity-20" style="background-image:radial-gradient(circle at 20% 20%,#fff 1px,transparent 1px);background-size:22px 22px"></div>
+                <div class="relative">
+                    <h2 class="text-3xl font-bold newspaper-heading">{% trans "Visit REC in Kigali" %}</h2>
+                    <p class="mt-4 text-blue-100">{{ site_settings.address_line_1 }}<br>{{ site_settings.address_line_2 }}</p>
+                    <div class="mt-8 flex h-56 items-center justify-center rounded-2xl border border-white/20 bg-white/10 text-center text-sm text-blue-100">
+                        <a href="https://maps.google.com/?q=Kinyinya%20KG%2012%20Avenue%20Kigali" target="_blank" rel="noopener" class="rounded-full bg-white px-6 py-3 font-bold text-heading-blue">{% if LANGUAGE_CODE == "fr" %}OUVRIR DANS GOOGLE MAPS{% elif LANGUAGE_CODE == "rw" %}FUNGURA MURI GOOGLE MAPS{% else %}OPEN IN GOOGLE MAPS{% endif %}</a>
+                    </div>
+                    <div class="mt-7 flex gap-3 text-xs font-bold"><a href="{{ site_settings.facebook_url|default:'#' }}" class="rounded-full border border-white/30 px-4 py-2">Facebook</a><a href="{{ site_settings.youtube_url|default:'#' }}" class="rounded-full border border-white/30 px-4 py-2">YouTube</a><a href="{{ site_settings.instagram_url|default:'#' }}" class="rounded-full border border-white/30 px-4 py-2">Instagram</a></div>
+                </div>
+            </aside>
+        </div>
+    </div>
+</section>
+{% endblock %}

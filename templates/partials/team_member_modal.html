@@ -1,0 +1,49 @@
+{% load i18n %}
+<div
+    x-show="open"
+    x-cloak
+    @keydown.escape.window="closeModal()"
+    class="fixed inset-0 z-[120] flex items-center justify-center p-4"
+    role="dialog"
+    aria-modal="true"
+    :aria-label="activeMember ? activeMember.name : '{% trans "Team member profile" %}'"
+>
+    <div class="absolute inset-0 bg-black/70" @click="closeModal()"></div>
+
+    <div
+        x-show="open"
+        x-transition
+        class="relative flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl"
+        @click.stop
+    >
+        <button type="button" @click="closeModal()" class="absolute right-4 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-xl font-bold text-ink shadow hover:bg-primary hover:text-white" aria-label="{% trans 'Close' %}">×</button>
+
+        <template x-if="activeMember">
+            <div class="overflow-y-auto">
+                <div class="grid md:grid-cols-[280px_1fr]">
+                    <div class="min-h-[280px] bg-gradient-to-br from-primary/10 to-paper md:min-h-full">
+                        <img :src="activeMember.photo_url" :alt="activeMember.name" class="h-full w-full object-cover" x-show="activeMember.photo_url">
+                        <div class="flex h-full min-h-[280px] items-center justify-center text-6xl font-bold text-primary/25 newspaper-heading" x-show="!activeMember.photo_url" x-text="activeMember.name ? activeMember.name.charAt(0) : ''"></div>
+                    </div>
+                    <div class="p-6 sm:p-8">
+                        <span class="text-[10px] font-bold uppercase tracking-[.2em] text-primary" x-text="activeMember.role"></span>
+                        <h2 class="mt-2 text-3xl font-bold text-ink newspaper-heading" x-text="activeMember.name"></h2>
+                        <div class="page-copy mt-5 text-sm leading-relaxed text-gray-600" x-html="activeMember.bio"></div>
+
+                        <div class="mt-6 space-y-2 text-sm text-gray-600" x-show="activeMember.phone || activeMember.email">
+                            <p x-show="activeMember.phone"><strong>{% trans "Phone" %}:</strong> <a :href="'tel:' + activeMember.phone" class="text-heading-blue hover:text-primary" x-text="activeMember.phone"></a></p>
+                            <p x-show="activeMember.email"><strong>{% trans "Email" %}:</strong> <a :href="'mailto:' + activeMember.email" class="text-heading-blue hover:text-primary" x-text="activeMember.email"></a></p>
+                        </div>
+
+                        <div class="mt-6 flex flex-wrap gap-2" x-show="activeMember.facebook_url || activeMember.x_url || activeMember.instagram_url || activeMember.linkedin_url">
+                            <a x-show="activeMember.facebook_url" :href="activeMember.facebook_url" target="_blank" rel="noopener" class="rounded-full border border-gray-200 px-4 py-2 text-xs font-bold hover:border-primary hover:text-primary">Facebook</a>
+                            <a x-show="activeMember.x_url" :href="activeMember.x_url" target="_blank" rel="noopener" class="rounded-full border border-gray-200 px-4 py-2 text-xs font-bold hover:border-primary hover:text-primary">X</a>
+                            <a x-show="activeMember.instagram_url" :href="activeMember.instagram_url" target="_blank" rel="noopener" class="rounded-full border border-gray-200 px-4 py-2 text-xs font-bold hover:border-primary hover:text-primary">Instagram</a>
+                            <a x-show="activeMember.linkedin_url" :href="activeMember.linkedin_url" target="_blank" rel="noopener" class="rounded-full border border-gray-200 px-4 py-2 text-xs font-bold hover:border-primary hover:text-primary">LinkedIn</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </template>
+    </div>
+</div>

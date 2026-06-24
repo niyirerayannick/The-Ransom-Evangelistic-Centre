@@ -1,0 +1,6 @@
+{% load i18n %}
+<nav class="flex flex-wrap items-center gap-2 text-xs text-gray-500" aria-label="{% trans 'Breadcrumb' %}">
+    <a href="{% url 'home' %}" class="hover:text-primary">{% trans "Home" %}</a>
+    {% if page.parent %}<span>/</span><a href="{{ page.parent.get_absolute_url }}" class="hover:text-primary">{{ page.parent.title }}</a>{% endif %}
+    <span>/</span><span class="text-gray-700">{{ page.title }}</span>
+</nav>

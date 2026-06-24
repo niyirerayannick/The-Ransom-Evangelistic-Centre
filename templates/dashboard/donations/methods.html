@@ -1,0 +1,35 @@
+{% extends "dashboard/base.html" %}
+{% load i18n %}
+
+{% block page_title %}{{ page_title }}{% endblock %}
+{% block page_subtitle %}<p class="mt-1 text-sm text-gray-500"><a href="{{ pledges_url }}" class="text-primary hover:underline">{% trans "Pledges" %}</a> · <a href="{{ programs_url }}" class="text-primary hover:underline">{% trans "Programs" %}</a></p>{% endblock %}
+
+{% block header_actions %}
+{% if can_write %}<a href="{% url 'dashboard:donation_method_create' %}" class="rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-white hover:bg-primary-dark">{% trans "Add method" %}</a>{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+    <table class="min-w-full text-sm">
+        <thead class="bg-gray-50 text-left text-xs font-bold uppercase tracking-wider text-gray-500">
+            <tr><th class="px-4 py-3">{% trans "Name" %}</th><th class="px-4 py-3">{% trans "Type" %}</th><th class="px-4 py-3">{% trans "Details" %}</th><th class="px-4 py-3">{% trans "Active" %}</th><th class="px-4 py-3 text-right">{% trans "Actions" %}</th></tr>
+        </thead>
+        <tbody class="divide-y divide-gray-50">
+            {% for method in methods %}
+            <tr>
+                <td class="px-4 py-3 font-semibold">{{ method.name }}</td>
+                <td class="px-4 py-3">{{ method.get_method_type_display }}</td>
+                <td class="px-4 py-3 text-gray-600">{{ method.account_number|default:method.mobile_money_number }} {{ method.currency }}</td>
+                <td class="px-4 py-3">{% if method.is_active %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</td>
+                <td class="px-4 py-3 text-right">
+                    <a href="{% url 'dashboard:donation_method_edit' method.pk %}" class="text-xs font-bold text-primary">{% trans "Edit" %}</a>
+                    {% if can_write %}
+                    <form method="post" action="{% url 'dashboard:donation_method_delete' method.pk %}" class="inline" onsubmit="return confirm('{% trans "Delete?" %}')">{% csrf_token %}<button class="ml-2 text-xs font-bold text-red-600">{% trans "Delete" %}</button></form>
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}<tr><td colspan="5" class="px-4 py-12 text-center text-gray-500">{% trans "No methods yet." %}</td></tr>{% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Article unavailable" %} — {{ site_settings.site_name }}{% endblock %}
+
+{% block content %}
+<div class="site-container py-16 md:py-24">
+    <div class="mx-auto max-w-2xl rounded-2xl border border-amber-200 bg-amber-50 p-8 text-center shadow-sm md:p-12">
+        <p class="text-xs font-bold uppercase tracking-[.2em] text-amber-700">{% trans "Translation unavailable" %}</p>
+        <h1 class="mt-4 text-2xl font-bold text-ink newspaper-heading md:text-3xl">
+            {% trans "This article is not available in this language yet." %}
+        </h1>
+        <p class="mt-4 text-sm leading-relaxed text-amber-900/80">
+            {% trans "Please choose one of the available language versions below." %}
+        </p>
+
+        {% if available_language_links %}
+        <div class="mt-8 flex flex-wrap justify-center gap-3">
+            {% for link in available_language_links %}
+            <a href="{{ link.url }}" class="rounded-full bg-primary px-5 py-2.5 text-xs font-bold text-white transition hover:bg-primary-dark">
+                {% blocktrans with language=link.label %}Available in {{ language }}{% endblocktrans %}
+            </a>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <a href="{% url 'home' %}" class="mt-8 inline-flex text-sm font-bold text-heading-blue hover:underline">{% trans "Back to homepage" %}</a>
+    </div>
+</div>
+{% endblock %}

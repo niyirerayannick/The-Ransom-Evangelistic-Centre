@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{{ gallery.title }} - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container-custom py-8">
+    <a href="{% url 'mediahub:gallery_list' %}" class="text-blue-700 hover:underline mb-4 inline-block">&larr; {% trans "Back to Galleries" %}</a>
+    <h1 class="section-title">{{ gallery.title }}</h1>
+    {% if gallery.description %}<p class="text-gray-600 mb-6">{{ gallery.description }}</p>{% endif %}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {% for media in gallery.images.all %}
+        <a href="{{ media.image.url }}" target="_blank" class="card group">
+            <img src="{{ media.image.url }}" alt="{{ media.alt_text|default:media.title }}" class="w-full h-48 object-cover group-hover:scale-105 transition duration-300">
+            <div class="p-2 text-center text-sm text-gray-600">{{ media.title }}</div>
+        </a>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

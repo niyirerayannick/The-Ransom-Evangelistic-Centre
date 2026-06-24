@@ -1,0 +1,15 @@
+{% load i18n %}
+{% if breaking_news %}
+<div class="bg-red-600 text-white">
+    <div class="container-custom flex items-center py-1.5 overflow-hidden">
+        <span class="bg-red-800 text-white px-3 py-1 rounded font-bold text-sm uppercase mr-3 flex-shrink-0">{% trans "Breaking" %}</span>
+        <div id="breaking-ticker-content" class="overflow-hidden whitespace-nowrap">
+            {% for post in breaking_news %}
+            <a href="{{ post.get_absolute_url }}" class="inline-block mr-8 hover:underline">
+                {{ post.title_for_language }}
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}

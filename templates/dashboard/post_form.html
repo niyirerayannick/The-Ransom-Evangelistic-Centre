@@ -1,0 +1,208 @@
+{% extends "dashboard/base.html" %}
+{% load i18n %}
+
+{% block page_title %}{% if is_create %}{% trans "Create Post" %}{% else %}{% trans "Edit Post" %}{% endif %}{% endblock %}
+{% block page_subtitle %}<p class="text-sm text-gray-500">{% trans "Write content in English, French, and Kinyarwanda from one form." %}</p>{% endblock %}
+
+{% block header_actions %}
+{% if post %}
+<a href="{% url 'dashboard:post_preview' post.pk %}" class="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-bold hover:bg-gray-50">{% trans "Preview" %}</a>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+{% if post and post.status == "rejected" and post.rejection_reason %}
+<div class="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+    <strong>{% trans "Rejection reason:" %}</strong> {{ post.rejection_reason }}
+</div>
+{% endif %}
+
+<form method="post" enctype="multipart/form-data" id="post-form">
+    {% csrf_token %}
+    <div class="grid gap-8 lg:grid-cols-[1fr_320px]">
+        <div class="space-y-6">
+            {% if form.non_field_errors %}
+            <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{{ form.non_field_errors }}</div>
+            {% endif %}
+
+            <div class="rounded-xl border border-gray-200 bg-white shadow-sm" x-data="{ activeTab: 'en' }">
+                <div class="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 px-4 py-3">
+                    <div class="flex flex-wrap gap-1">
+                        <button type="button" @click="activeTab = 'en'" :class="activeTab === 'en' ? 'bg-primary text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'" class="rounded-lg px-4 py-2 text-sm font-bold transition">{% trans "English" %}</button>
+                        <button type="button" @click="activeTab = 'fr'" :class="activeTab === 'fr' ? 'bg-primary text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'" class="rounded-lg px-4 py-2 text-sm font-bold transition">{% trans "French" %}</button>
+                        <button type="button" @click="activeTab = 'rw'" :class="activeTab === 'rw' ? 'bg-primary text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'" class="rounded-lg px-4 py-2 text-sm font-bold transition">{% trans "Kinyarwanda" %}</button>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                        <button type="button" onclick="copyField('title_en', 'title_fr')" class="rounded border border-gray-200 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-gray-500 hover:border-primary hover:text-primary">{% trans "EN title → FR" %}</button>
+                        <button type="button" onclick="copyEditor('content_en', 'content_fr')" class="rounded border border-gray-200 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-gray-500 hover:border-primary hover:text-primary">{% trans "EN content → FR" %}</button>
+                        <button type="button" onclick="copyField('title_en', 'title_rw')" class="rounded border border-gray-200 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-gray-500 hover:border-primary hover:text-primary">{% trans "EN title → RW" %}</button>
+                        <button type="button" onclick="copyEditor('content_en', 'content_rw')" class="rounded border border-gray-200 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-gray-500 hover:border-primary hover:text-primary">{% trans "EN content → RW" %}</button>
+                    </div>
+                </div>
+
+                {% for lang, label in form.LANGUAGE_FIELDS %}
+                <div x-show="activeTab === '{{ lang }}'" x-cloak class="space-y-5 p-5">
+                    <div>
+                        <label class="mb-1 block text-xs font-bold uppercase tracking-wider text-gray-500">{% trans "Title" %}</label>
+                        {% if lang == "en" %}{{ form.title_en }}{% elif lang == "fr" %}{{ form.title_fr }}{% else %}{{ form.title_rw }}{% endif %}
+                        {% if lang == "en" and form.title_en.errors %}<p class="mt-1 text-xs text-red-600">{{ form.title_en.errors.0 }}</p>{% endif %}
+                        {% if lang == "fr" and form.title_fr.errors %}<p class="mt-1 text-xs text-red-600">{{ form.title_fr.errors.0 }}</p>{% endif %}
+                        {% if lang == "rw" and form.title_rw.errors %}<p class="mt-1 text-xs text-red-600">{{ form.title_rw.errors.0 }}</p>{% endif %}
+                    </div>
+                    <div>
+                        <label class="mb-1 block text-xs font-bold uppercase tracking-wider text-gray-500">{% trans "Slug" %}</label>
+                        {% if lang == "en" %}{{ form.slug_en }}{% elif lang == "fr" %}{{ form.slug_fr }}{% else %}{{ form.slug_rw }}{% endif %}
+                    </div>
+                    <div>
+                        <label class="mb-1 block text-xs font-bold uppercase tracking-wider text-gray-500">{% trans "Excerpt" %}</label>
+                        {% if lang == "en" %}{{ form.excerpt_en }}{% elif lang == "fr" %}{{ form.excerpt_fr }}{% else %}{{ form.excerpt_rw }}{% endif %}
+                    </div>
+                    <div>
+                        <label class="mb-1 block text-xs font-bold uppercase tracking-wider text-gray-500">{% trans "Content" %}</label>
+                        {% if lang == "en" %}{{ form.content_en }}{% elif lang == "fr" %}{{ form.content_fr }}{% else %}{{ form.content_rw }}{% endif %}
+                        {% if lang == "en" and form.content_en.errors %}<p class="mt-1 text-xs text-red-600">{{ form.content_en.errors.0 }}</p>{% endif %}
+                    </div>
+                    <div class="grid gap-4 sm:grid-cols-2">
+                        <div>
+                            <label class="mb-1 block text-xs font-bold uppercase tracking-wider text-gray-500">{% trans "SEO Title" %}</label>
+                            {% if lang == "en" %}{{ form.seo_title_en }}{% elif lang == "fr" %}{{ form.seo_title_fr }}{% else %}{{ form.seo_title_rw }}{% endif %}
+                        </div>
+                        <div>
+                            <label class="mb-1 block text-xs font-bold uppercase tracking-wider text-gray-500">{% trans "SEO Description" %}</label>
+                            {% if lang == "en" %}{{ form.meta_description_en }}{% elif lang == "fr" %}{{ form.meta_description_fr }}{% else %}{{ form.meta_description_rw }}{% endif %}
+                        </div>
+                    </div>
+                    <label class="flex items-center gap-2 text-sm">
+                        {% if lang == "en" %}{{ form.english_complete }}{% elif lang == "fr" %}{{ form.french_complete }}{% else %}{{ form.kinyarwanda_complete }}{% endif %}
+                        <span>{% trans "Mark translation complete" %}</span>
+                    </label>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <aside class="space-y-5">
+            <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+                <h3 class="mb-4 text-sm font-bold uppercase tracking-wider text-gray-500">{% trans "Publish" %}</h3>
+
+                <div class="space-y-4">
+                    <div>
+                        <label class="mb-1 block text-xs font-bold uppercase tracking-wider text-gray-500">{% trans "Featured Image" %}</label>
+                        {% if post and post.featured_image %}
+                        <img src="{{ post.featured_image.url }}" alt="" class="mb-2 h-32 w-full rounded-lg object-cover">
+                        {% endif %}
+                        {{ form.featured_image }}
+                    </div>
+
+                    <div>
+                        <label class="mb-1 block text-xs font-bold uppercase tracking-wider text-gray-500">{% trans "Category" %}</label>
+                        {{ form.category }}
+                    </div>
+
+                    <div>
+                        <label class="mb-1 block text-xs font-bold uppercase tracking-wider text-gray-500">{% trans "Tags" %}</label>
+                        <div class="max-h-40 space-y-1 overflow-y-auto rounded-lg border border-gray-200 p-2">
+                            {% for tag in all_tags %}
+                            <label class="flex items-center gap-2 text-sm">
+                                <input type="checkbox" name="tags" value="{{ tag.pk }}" {% if post and tag in post.tags.all %}checked{% endif %} class="rounded border-gray-300 text-primary focus:ring-primary">
+                                {{ tag.name }}
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="mb-1 block text-xs font-bold uppercase tracking-wider text-gray-500">{% trans "Status" %}</label>
+                        {{ form.status }}
+                    </div>
+
+                    <div>
+                        <label class="mb-1 block text-xs font-bold uppercase tracking-wider text-gray-500">{% trans "Schedule Publish Date" %}</label>
+                        {{ form.published_at }}
+                    </div>
+
+                    <label class="flex items-center gap-2 text-sm">
+                        {{ form.is_breaking }}
+                        <span>{% trans "Breaking news" %}</span>
+                    </label>
+                    <label class="flex items-center gap-2 text-sm">
+                        {{ form.is_featured }}
+                        <span>{% trans "Featured" %}</span>
+                    </label>
+                </div>
+
+                <div class="mt-6 space-y-2">
+                    <button type="submit" name="action" value="save_draft" class="w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm font-bold hover:bg-gray-50">{% trans "Save Draft" %}</button>
+                    <button type="submit" name="action" value="submit_review" class="w-full rounded-lg bg-amber-500 px-4 py-2.5 text-sm font-bold text-white hover:bg-amber-600">{% trans "Submit for Review" %}</button>
+                    {% if post %}
+                    <button type="submit" name="action" value="preview" class="w-full rounded-lg border border-heading-blue px-4 py-2.5 text-sm font-bold text-heading-blue hover:bg-heading-blue/5">{% trans "Preview" %}</button>
+                    {% endif %}
+                    {% if request.user.can_publish_posts %}
+                    <button type="submit" name="action" value="publish" class="w-full rounded-lg bg-green-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-green-700">{% trans "Publish" %}</button>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if post %}
+            <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+                <h3 class="mb-3 text-sm font-bold uppercase tracking-wider text-gray-500">{% trans "Translation Status" %}</h3>
+                <div class="flex flex-wrap gap-2">{% include "dashboard/partials/language_badges.html" %}</div>
+            </div>
+
+            {% if request.user.can_review_posts and post.status == "pending_review" %}
+            <div class="rounded-xl border border-amber-200 bg-amber-50 p-5">
+                <h3 class="mb-3 text-sm font-bold text-amber-800">{% trans "Editor Review" %}</h3>
+                <form method="post" action="{% url 'dashboard:post_review' post.pk %}" class="space-y-3">
+                    {% csrf_token %}
+                    {{ review_form.rejection_reason }}
+                    <div class="grid gap-2">
+                        <button type="submit" name="action" value="publish" class="rounded-lg bg-green-600 px-3 py-2 text-xs font-bold text-white">{% trans "Publish" %}</button>
+                        <button type="submit" name="action" value="send_back" class="rounded-lg bg-white px-3 py-2 text-xs font-bold text-gray-700 ring-1 ring-gray-200">{% trans "Send Back" %}</button>
+                        <button type="submit" name="action" value="reject" class="rounded-lg bg-red-600 px-3 py-2 text-xs font-bold text-white">{% trans "Reject" %}</button>
+                    </div>
+                </form>
+            </div>
+            {% endif %}
+            {% endif %}
+        </aside>
+    </div>
+</form>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function copyField(fromId, toId) {
+    const from = document.getElementById('id_' + fromId);
+    const to = document.getElementById('id_' + toId);
+    if (from && to) {
+        to.value = from.value;
+        to.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+}
+
+function copyEditor(fromId, toId) {
+    const fromTextarea = document.getElementById('id_' + fromId);
+    const toTextarea = document.getElementById('id_' + toId);
+    if (!fromTextarea || !toTextarea) return;
+
+    let content = fromTextarea.value;
+    if (window.CKEDITOR && CKEDITOR.instances['id_' + fromId]) {
+        content = CKEDITOR.instances['id_' + fromId].getData();
+    }
+    if (window.CKEDITOR && CKEDITOR.instances['id_' + toId]) {
+        CKEDITOR.instances['id_' + toId].setData(content);
+    } else if (toTextarea) {
+        toTextarea.value = content;
+    }
+}
+</script>
+<style>
+    #post-form input[type="text"], #post-form input[type="url"], #post-form input[type="datetime-local"],
+    #post-form select, #post-form textarea:not([id^="id_content"]) {
+        width: 100%; border-radius: 0.5rem; border: 1px solid #e5e7eb; padding: 0.625rem 0.875rem; font-size: 0.875rem;
+    }
+    #post-form input:focus, #post-form select:focus, #post-form textarea:focus { outline: none; border-color: #d39200; }
+    #post-form input[type="file"] { font-size: 0.75rem; }
+    #post-form input[type="checkbox"] { border-radius: 0.25rem; }
+</style>
+{% endblock %}
