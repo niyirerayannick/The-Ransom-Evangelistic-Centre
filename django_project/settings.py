@@ -94,11 +94,12 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "django_project.wsgi.application"
 
-_sqlite_path = os.environ.get("SQLITE_DB_PATH") or os.environ.get("DJANGO_DB_PATH")
+SQLITE_DB_PATH = os.environ.get("SQLITE_DB_PATH") or os.environ.get("DJANGO_DB_PATH") or str(BASE_DIR / "db.sqlite3")
+
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
-        "NAME": Path(_sqlite_path) if _sqlite_path else BASE_DIR / "db.sqlite3",
+        "NAME": SQLITE_DB_PATH,
     }
 }
 
@@ -141,8 +142,7 @@ MODELTRANSLATION_PRELOAD_ALL_LANGUAGES = True
 
 STATIC_URL = "/static/"
 STATICFILES_DIRS = [BASE_DIR / "static" / "src"]
-_static_root = os.environ.get("STATIC_ROOT")
-STATIC_ROOT = Path(_static_root) if _static_root else BASE_DIR / "staticfiles"
+STATIC_ROOT = os.environ.get("STATIC_ROOT", str(BASE_DIR / "staticfiles"))
 STORAGES = {
     "default": {
         "BACKEND": "django.core.files.storage.FileSystemStorage",
@@ -153,8 +153,7 @@ STORAGES = {
 }
 
 MEDIA_URL = "/media/"
-_media_root = os.environ.get("MEDIA_ROOT")
-MEDIA_ROOT = Path(_media_root) if _media_root else BASE_DIR / "media"
+MEDIA_ROOT = os.environ.get("MEDIA_ROOT", str(BASE_DIR / "media"))
 
 CKEDITOR_UPLOAD_PATH = "uploads/"
 CKEDITOR_CONFIGS = {

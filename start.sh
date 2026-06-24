@@ -1,16 +1,12 @@
 #!/bin/sh
 set -e
 
-SQLITE_DB_PATH="${SQLITE_DB_PATH:-/app/data/db.sqlite3}"
-MEDIA_ROOT="${MEDIA_ROOT:-/app/media}"
-STATIC_ROOT="${STATIC_ROOT:-/app/staticfiles}"
+echo "Checking database path..."
+echo "SQLITE_DB_PATH=${SQLITE_DB_PATH:-/app/data/db.sqlite3}"
 
-mkdir -p "$(dirname "$SQLITE_DB_PATH")" "$MEDIA_ROOT" "$STATIC_ROOT"
-
-if [ ! -f "$SQLITE_DB_PATH" ]; then
-  echo "WARNING: Production SQLite database not found at $SQLITE_DB_PATH"
-  echo "WARNING: Upload your local db.sqlite3 to the persistent volume before expecting existing content."
-  echo "WARNING: Migrations will run, but the site will start without imported WordPress data."
+if [ ! -f "${SQLITE_DB_PATH:-/app/data/db.sqlite3}" ]; then
+  echo "WARNING: SQLite database not found at ${SQLITE_DB_PATH:-/app/data/db.sqlite3}"
+  echo "The app may start with an empty database unless the persistent volume is mounted correctly."
 fi
 
 python manage.py migrate --noinput
