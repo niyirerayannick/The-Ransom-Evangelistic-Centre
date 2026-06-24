@@ -1,12 +1,16 @@
 #!/bin/sh
 set -e
 
-echo "Checking database path..."
-echo "SQLITE_DB_PATH=${SQLITE_DB_PATH:-/app/data/db.sqlite3}"
+DB_PATH="${SQLITE_DB_PATH:-/app/data/db.sqlite3}"
 
-if [ ! -f "${SQLITE_DB_PATH:-/app/data/db.sqlite3}" ]; then
-  echo "WARNING: SQLite database not found at ${SQLITE_DB_PATH:-/app/data/db.sqlite3}"
-  echo "The app may start with an empty database unless the persistent volume is mounted correctly."
+echo "Checking database path..."
+echo "SQLITE_DB_PATH=${DB_PATH}"
+
+if [ ! -f "${DB_PATH}" ]; then
+  echo "ERROR: SQLite database not found at ${DB_PATH}"
+  echo "Upload your local db.sqlite3 to the server persistent volume before starting."
+  echo "See DEPLOYMENT_COOLIFY.md section B (Copy local database and media)."
+  exit 1
 fi
 
 python manage.py migrate --noinput

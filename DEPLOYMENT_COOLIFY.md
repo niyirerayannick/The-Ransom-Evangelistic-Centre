@@ -50,19 +50,45 @@ It does **not** run `seed_homepage`, `import_wordpress_data`, `seed_donation_dat
 
 ---
 
-## B. Copy local database and media
+## B. Copy local database and media (required)
 
-Copy these to the server (SFTP, `scp`, or Coolify file manager):
+**Coolify does not copy your local database automatically.** You must upload it once (and again whenever you want to refresh production from local).
 
-- `db.sqlite3` → server path below
-- Entire `media/` folder contents → server media path below
+If the server already started with an **empty** database, replace it:
 
-Example with `scp`:
+1. Stop the Coolify application (or scale to 0).
+2. Delete the empty file on the server: `/data/yvesgashugi/data/db.sqlite3`
+3. Upload your local copy (steps below).
+4. Redeploy / restart.
+
+### Option 1 — PowerShell script (Windows)
+
+From the project root, after `python manage.py migrate`:
+
+```powershell
+.\scripts\push_production_data.ps1 -Server "root@YOUR_SERVER_IP"
+```
+
+Replace `YOUR_SERVER_IP` with your Coolify server address.
+
+### Option 2 — Manual `scp`
 
 ```bash
-scp db.sqlite3 user@your-server:/data/yvesgashugi/data/db.sqlite3
-scp -r media/* user@your-server:/data/yvesgashugi/media/
+# On your PC (Git Bash or WSL), from the project folder:
+python manage.py migrate
+
+scp db.sqlite3 root@YOUR_SERVER_IP:/data/yvesgashugi/data/db.sqlite3
+scp -r media/* root@YOUR_SERVER_IP:/data/yvesgashugi/media/
 ```
+
+### Option 3 — Coolify / SSH file manager
+
+Upload directly on the server:
+
+- `db.sqlite3` → `/data/yvesgashugi/data/db.sqlite3`
+- `media/*` → `/data/yvesgashugi/media/`
+
+**Important:** The file must be named exactly `db.sqlite3` and sit inside the folder mounted to `/app/data`.
 
 ---
 
@@ -120,13 +146,13 @@ Replace domain and `SECRET_KEY` with your real values.
 
 Push your code (with `Dockerfile` and `start.sh`), then deploy in Coolify.
 
-Check container logs. If the database was not mounted, you will see:
+Check container logs. If the database was not uploaded or mounted, startup **stops** with:
 
 ```
-WARNING: Production SQLite database not found at /app/data/db.sqlite3
+ERROR: SQLite database not found at /app/data/db.sqlite3
 ```
 
-Fix the volume mount and upload `db.sqlite3`, then redeploy.
+Upload your local `db.sqlite3`, confirm the volume mount, then redeploy.
 
 ---
 
