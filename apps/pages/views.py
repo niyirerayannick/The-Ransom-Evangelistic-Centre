@@ -1,5 +1,5 @@
 from django.views.generic import DetailView
-from django.shortcuts import redirect
+from django.shortcuts import get_object_or_404, redirect
 from django.db.models import Q
 from django.contrib import messages
 from django.utils.html import strip_tags
@@ -202,3 +202,21 @@ class PageDetailView(DetailView):
             return redirect(self.object.get_absolute_url())
         context = self.get_context_data(form=form)
         return self.render_to_response(context)
+
+
+class BookReaderView(DetailView):
+    model = Book
+    template_name = "pages/book_reader.html"
+    context_object_name = "book"
+    slug_field = "slug"
+    slug_url_kwarg = "slug"
+
+    def get_queryset(self):
+        return Book.objects.filter(is_active=True).select_related("category")
+
+    def get_object(self, queryset=None):
+        book = get_object_or_404(self.get_queryset(), slug=self.kwargs["slug"])
+        if not book.download_file:
+            from django.http import Http404
+            raise Http404
+        return book

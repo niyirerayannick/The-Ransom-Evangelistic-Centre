@@ -1,18 +1,25 @@
-<form method="post" class="space-y-5" novalidate id="counselling-request-form">
+{% load i18n %}
+<form method="post" class="space-y-6" novalidate id="counselling-request-form">
     {% csrf_token %}
     {% if form.non_field_errors %}
-    <div class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{{ form.non_field_errors }}</div>
+    <div class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm leading-relaxed text-red-700">{{ form.non_field_errors }}</div>
     {% endif %}
-    <div class="grid gap-5 sm:grid-cols-2">
+    <div class="grid gap-4 sm:grid-cols-2">
         {% for field in form %}
-        <label class="{% if field.name == 'message' %}sm:col-span-2{% endif %} block text-xs font-bold uppercase tracking-wider text-gray-500">
-            {{ field.label }}{% if field.field.required %} *{% endif %}
+        <label class="{% if field.name == 'message' %}sm:col-span-2{% endif %} block text-[11px] font-bold uppercase tracking-wider text-gray-500">
+            <span class="flex items-center justify-between gap-3">
+                <span>{{ field.label }}{% if field.field.required %} *{% endif %}</span>
+                {% if field.errors %}<span class="text-[10px] text-red-600">{% trans "Required" %}</span>{% endif %}
+            </span>
             {{ field }}
-            {% for error in field.errors %}<span class="mt-1 block text-xs normal-case text-red-600">{{ error }}</span>{% endfor %}
+            {% for error in field.errors %}<span class="mt-1.5 block text-xs font-medium normal-case tracking-normal text-red-600">{{ error }}</span>{% endfor %}
         </label>
         {% endfor %}
     </div>
-    <button type="submit" class="w-full rounded-full bg-primary px-8 py-3.5 text-xs font-bold uppercase tracking-wider text-white transition hover:bg-primary-dark sm:w-auto">
-        {{ counselling_ui.submit_request }}
-    </button>
+    <div class="flex flex-col gap-3 border-t border-gray-100 pt-5 sm:flex-row sm:items-center sm:justify-between">
+        <p class="text-xs leading-relaxed text-gray-500">{% trans "Your request is private and will be handled by the REC care team." %}</p>
+        <button type="submit" class="inline-flex min-h-12 w-full items-center justify-center rounded-full bg-primary px-8 py-3 text-xs font-bold uppercase tracking-wider text-white shadow-sm transition hover:bg-primary-dark sm:w-auto">
+            {{ counselling_ui.submit_request }}
+        </button>
+    </div>
 </form>

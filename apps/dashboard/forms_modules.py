@@ -1,6 +1,8 @@
 """Model forms for dashboard module editing (no Django admin redirect)."""
 
 from django import forms
+from django.core.exceptions import ValidationError
+from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 from ckeditor.widgets import CKEditorWidget
 
@@ -136,6 +138,55 @@ class BookDashboardForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["category"].queryset = BookCategory.objects.filter(is_active=True)
+        self.fields["slug"].required = False
+        self.fields["title_en"].required = True
+        self.fields["download_file"].required = True
+        self.fields["download_file"].help_text = _("Upload the book as a PDF file.")
+        self.fields["download_file"].widget.attrs["accept"] = "application/pdf,.pdf"
+        self.fields["slug"].help_text = _("Leave blank to generate it from the English title.")
+
+    def clean_download_file(self):
+        file = self.cleaned_data.get("download_file")
+        if not file:
+            return file
+        name = getattr(file, "name", "")
+        if name and not name.lower().endswith(".pdf"):
+            raise ValidationError(_("Books must be uploaded as PDF files."))
+        return file
+
+    def clean_slug(self):
+        slug = (self.cleaned_data.get("slug") or "").strip()
+        if slug:
+            return slugify(slug)
+        title = (
+            self.cleaned_data.get("title_en")
+            or self.cleaned_data.get("title_fr")
+            or self.cleaned_data.get("title_rw")
+            or ""
+        )
+        base = slugify(title)[:200] or "book"
+        candidate = base
+        counter = 1
+        queryset = Book.objects.filter(slug=candidate)
+        if self.instance and self.instance.pk:
+            queryset = queryset.exclude(pk=self.instance.pk)
+        while queryset.exists():
+            suffix = f"-{counter}"
+            candidate = f"{base[:220 - len(suffix)]}{suffix}"
+            queryset = Book.objects.filter(slug=candidate)
+            if self.instance and self.instance.pk:
+                queryset = queryset.exclude(pk=self.instance.pk)
+            counter += 1
+        return candidate
+
+    def save(self, commit=True):
+        obj = super().save(commit=False)
+        obj.title = obj.title_en or obj.title_fr or obj.title_rw or obj.title
+        obj.description = obj.description_en or obj.description_fr or obj.description_rw or obj.description
+        if commit:
+            obj.save()
+            self.save_m2m()
+        return obj
 
 
 class CounsellingDashboardForm(forms.ModelForm):

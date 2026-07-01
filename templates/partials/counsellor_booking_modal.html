@@ -1,0 +1,45 @@
+{% load i18n %}
+<div
+    x-show="bookingOpen"
+    x-cloak
+    @keydown.escape.window="closeBooking()"
+    class="fixed inset-0 z-[130] flex items-center justify-center p-3 sm:p-4"
+    role="dialog"
+    aria-modal="true"
+    aria-label="{% trans 'Book counselling appointment' %}"
+>
+    <div class="absolute inset-0 bg-black/75 backdrop-blur-sm" @click="closeBooking()"></div>
+
+    <div
+        x-show="bookingOpen"
+        x-transition
+        class="relative max-h-[92vh] w-full max-w-4xl overflow-hidden rounded-2xl bg-white shadow-2xl"
+        @click.stop
+    >
+        <button type="button" @click="closeBooking()" class="absolute right-4 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/95 text-xl font-bold text-ink shadow hover:bg-primary hover:text-white" aria-label="{% trans 'Close' %}">x</button>
+
+        <div class="grid max-h-[92vh] overflow-y-auto lg:grid-cols-[.82fr_1.18fr]">
+            <aside class="bg-[#333333] p-6 text-white sm:p-8">
+                <span class="text-[10px] font-bold uppercase tracking-[.2em] text-primary">{{ counselling_ui.confidential_request }}</span>
+                <h2 class="mt-3 pr-12 text-3xl font-bold leading-tight newspaper-heading">{{ counselling_ui.request_heading }}</h2>
+                <p class="mt-4 text-sm leading-relaxed text-gray-300">{{ counselling_ui.request_intro }}</p>
+
+                <div class="mt-7 rounded-2xl border border-white/10 bg-white/10 p-4" x-show="bookingCounsellor">
+                    <p class="text-[10px] font-bold uppercase tracking-[.18em] text-primary">{% trans "Selected therapist" %}</p>
+                    <div class="mt-3 flex items-center gap-3">
+                        <img :src="bookingCounsellor.photo_url" :alt="bookingCounsellor.name" class="h-14 w-14 rounded-full object-cover ring-2 ring-white/20" x-show="bookingCounsellor && bookingCounsellor.photo_url">
+                        <div class="flex h-14 w-14 items-center justify-center rounded-full bg-primary/20 text-xl font-bold text-primary newspaper-heading" x-show="bookingCounsellor && !bookingCounsellor.photo_url" x-text="bookingCounsellor && bookingCounsellor.name ? bookingCounsellor.name.charAt(0) : ''"></div>
+                        <div>
+                            <p class="font-bold leading-tight newspaper-heading" x-text="bookingCounsellor ? bookingCounsellor.name : ''"></p>
+                            <p class="mt-1 text-xs leading-snug text-gray-300" x-text="bookingCounsellor ? bookingCounsellor.role : ''"></p>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <div class="p-6 sm:p-8">
+                {% include "partials/counselling_request_form.html" %}
+            </div>
+        </div>
+    </div>
+</div>

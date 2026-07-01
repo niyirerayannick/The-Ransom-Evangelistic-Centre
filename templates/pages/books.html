@@ -1,29 +1,112 @@
 {% extends "base.html" %}
 {% load i18n %}
-{% block content %}
-{% include "partials/page_hero.html" with eyebrow="Books & Resources" %}
-<section class="bg-paper py-14">
-    <div class="site-container">
-        {% if featured_book %}
-        <article class="grid overflow-hidden rounded-3xl bg-[#333] text-white shadow-xl lg:grid-cols-[340px_1fr]">
-            <div class="flex min-h-[400px] items-center justify-center bg-primary/10 p-8">{% if featured_book.cover_image %}<img src="{{ featured_book.cover_image.url }}" alt="{{ featured_book.title }}" class="max-h-96 shadow-2xl">{% else %}<div class="flex aspect-[2/3] w-52 items-center justify-center rounded bg-primary p-6 text-center text-2xl font-bold newspaper-heading">{{ featured_book.title }}</div>{% endif %}</div>
-            <div class="p-8 sm:p-12"><span class="text-xs font-bold uppercase tracking-[.2em] text-primary">{% trans "Featured book" %}</span><h2 class="mt-3 text-4xl font-bold newspaper-heading">{{ featured_book.title }}</h2><p class="mt-2 text-sm text-gray-400">{% trans "By" %} {{ featured_book.author }}</p><div class="page-copy mt-6 text-gray-200">{{ featured_book.description|safe }}</div>{% if featured_book.download_file %}<a href="{{ featured_book.download_file.url }}" class="mt-7 inline-flex rounded-full bg-primary px-7 py-3 text-xs font-bold">{% trans "DOWNLOAD" %}</a>{% elif featured_book.external_link %}<a href="{{ featured_book.external_link }}" target="_blank" rel="noopener" class="mt-7 inline-flex rounded-full bg-primary px-7 py-3 text-xs font-bold">{% trans "READ OR BUY" %}</a>{% endif %}</div>
-        </article>
-        {% endif %}
 
-        <form method="get" class="mt-10 grid gap-3 rounded-2xl bg-white p-5 shadow-sm sm:grid-cols-[1fr_220px_auto]">
-            <input type="search" name="q" value="{{ book_query }}" placeholder="{% trans 'Search books, authors, or topics' %}" class="rounded-xl border border-gray-200 px-4 py-3 outline-none focus:border-primary">
-            <select name="category" class="rounded-xl border border-gray-200 px-4 py-3 outline-none focus:border-primary"><option value="">{% trans "All categories" %}</option>{% for category in book_categories %}<option value="{{ category.slug }}" {% if selected_category == category.slug %}selected{% endif %}>{{ category.name }}</option>{% endfor %}</select>
-            <button class="rounded-xl bg-primary px-7 py-3 text-xs font-bold text-white hover:bg-primary-dark">{% if LANGUAGE_CODE == "fr" %}FILTRER{% elif LANGUAGE_CODE == "rw" %}SHAKA{% else %}FILTER{% endif %}</button>
+{% block title %}{{ page.title }} - {{ site_settings.site_name|default:"The Ransom Evangelistic Centre" }}{% endblock %}
+{% block meta_description %}{{ page.excerpt|default:page.content|striptags|truncatechars:160 }}{% endblock %}
+
+{% block content %}
+<section
+    class="bg-paper py-14 md:py-16"
+    x-data="{ readerOpen: false, readerUrl: '', readerDownload: '', openReader(url, downloadUrl) { this.readerUrl = url; this.readerDownload = downloadUrl; this.readerOpen = true; document.body.classList.add('overflow-hidden'); }, closeReader() { this.readerOpen = false; this.readerUrl = ''; this.readerDownload = ''; document.body.classList.remove('overflow-hidden'); } }"
+    @keydown.escape.window="readerOpen && closeReader()"
+>
+    <div class="site-container">
+        <div class="mx-auto max-w-3xl text-center">
+            <span class="text-[10px] font-bold uppercase tracking-[.22em] text-primary">{% trans "REC Library" %}</span>
+            <h1 class="mt-2 text-3xl font-bold leading-tight text-ink sm:text-4xl newspaper-heading">{{ page.title }}</h1>
+            {% if page.excerpt %}
+            <p class="mt-4 text-sm leading-relaxed text-gray-600 sm:text-base">{{ page.excerpt }}</p>
+            {% endif %}
+        </div>
+
+        <form method="get" class="mx-auto mt-10 grid max-w-4xl gap-3 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm sm:grid-cols-[1fr_220px_auto]">
+            <input type="search" name="q" value="{{ book_query }}" placeholder="{% trans 'Search books or authors' %}" class="min-h-12 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20">
+            <select name="category" class="min-h-12 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20">
+                <option value="">{% trans "All categories" %}</option>
+                {% for category in book_categories %}
+                <option value="{{ category.slug }}" {% if selected_category == category.slug %}selected{% endif %}>{{ category.name }}</option>
+                {% endfor %}
+            </select>
+            <button class="min-h-12 rounded-xl bg-primary px-7 py-3 text-xs font-bold uppercase tracking-wider text-white transition hover:bg-primary-dark">
+                {% trans "Filter" %}
+            </button>
         </form>
 
-        <div class="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div class="mx-auto mt-10 max-w-4xl overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
             {% for book in books %}
-            <article class="group overflow-hidden rounded-2xl bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl">
-                <div class="flex h-72 items-center justify-center overflow-hidden bg-gradient-to-br from-primary/10 to-heading-blue/10 p-6">{% if book.cover_image %}<img src="{{ book.cover_image.url }}" alt="{{ book.title }}" class="max-h-full shadow-lg transition group-hover:scale-105">{% else %}<div class="flex aspect-[2/3] h-full items-center justify-center rounded bg-[#333] p-5 text-center font-bold text-white newspaper-heading">{{ book.title }}</div>{% endif %}</div>
-                <div class="p-5">{% if book.category %}<span class="text-[10px] font-bold uppercase text-primary">{{ book.category.name }}</span>{% endif %}<h3 class="mt-2 text-lg font-bold newspaper-heading">{{ book.title }}</h3><p class="mt-1 text-xs text-gray-500">{{ book.author }} · {{ book.get_language_display }}</p><div class="mt-4 flex items-center justify-between">{% if book.is_free %}<span class="rounded-full bg-green-50 px-3 py-1 text-[10px] font-bold text-green-700">{% trans "FREE" %}</span>{% elif book.price %}<span class="font-bold text-heading-blue">{{ book.price }}</span>{% endif %}{% if book.download_file %}<a href="{{ book.download_file.url }}" class="text-xs font-bold text-primary">{% trans "Download" %} →</a>{% elif book.external_link %}<a href="{{ book.external_link }}" target="_blank" rel="noopener" class="text-xs font-bold text-primary">{% trans "View book" %} →</a>{% endif %}</div></div>
+            <article class="grid gap-4 border-b border-gray-100 p-5 last:border-b-0 sm:grid-cols-[88px_1fr_auto] sm:items-center">
+                <div class="flex h-28 w-20 items-center justify-center overflow-hidden rounded-lg bg-gradient-to-br from-primary/10 via-paper to-heading-blue/10 sm:h-32 sm:w-24">
+                    {% if book.cover_image %}
+                    <img src="{{ book.cover_image.url }}" alt="{{ book.title }}" class="h-full w-full object-cover">
+                    {% else %}
+                    <span class="px-2 text-center text-xs font-bold text-primary newspaper-heading">{{ book.title|truncatechars:28 }}</span>
+                    {% endif %}
+                </div>
+
+                <div class="min-w-0">
+                    <div class="flex flex-wrap gap-2">
+                        {% if book.category %}
+                        <span class="rounded-full bg-primary/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-primary">{{ book.category.name }}</span>
+                        {% endif %}
+                        <span class="rounded-full bg-paper px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-gray-500">{{ book.get_language_display }}</span>
+                        {% if book.published_at %}<span class="rounded-full bg-paper px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-gray-500">{{ book.published_at|date:"M j, Y" }}</span>{% endif %}
+                    </div>
+                    <h2 class="mt-3 text-xl font-bold leading-tight text-ink newspaper-heading">{{ book.title }}</h2>
+                    <p class="mt-1 text-sm text-gray-500">{% trans "By" %} {{ book.author }}</p>
+                    {% if book.description %}
+                    <p class="mt-3 line-clamp-2 text-sm leading-relaxed text-gray-600">{{ book.description|striptags|truncatechars:180 }}</p>
+                    {% endif %}
+                </div>
+
+                <div class="flex flex-wrap gap-2 sm:justify-end">
+                    {% if book.download_file %}
+                    <button type="button" @click="openReader('{% url 'pages:book_reader' slug=book.slug %}', '{{ book.download_file.url }}')" class="inline-flex min-h-11 items-center rounded-full bg-primary px-5 py-2 text-[11px] font-bold uppercase tracking-wider text-white transition hover:bg-primary-dark">
+                        {% trans "Read book" %}
+                    </button>
+                    <a href="{{ book.download_file.url }}" download class="inline-flex min-h-11 items-center rounded-full border border-gray-200 px-5 py-2 text-[11px] font-bold uppercase tracking-wider text-ink transition hover:border-primary hover:text-primary">
+                        {% trans "Download" %}
+                    </a>
+                    {% else %}
+                    <span class="inline-flex min-h-11 items-center rounded-full bg-gray-100 px-5 py-2 text-[11px] font-bold uppercase tracking-wider text-gray-400">
+                        {% trans "PDF coming soon" %}
+                    </span>
+                    {% endif %}
+                </div>
             </article>
-            {% empty %}<p class="col-span-full rounded-2xl border border-dashed border-gray-300 bg-white p-10 text-center text-gray-500">{% trans "No books match your search yet." %}</p>{% endfor %}
+            {% empty %}
+            <p class="p-10 text-center text-gray-500">{% trans "No books match your search yet." %}</p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div
+        x-show="readerOpen"
+        x-cloak
+        class="fixed inset-0 z-[200] bg-black/70"
+        role="dialog"
+        aria-modal="true"
+        aria-label="{% trans 'Book reader' %}"
+    >
+        <div class="flex h-screen flex-col bg-[#3d3a39]">
+            <div class="flex h-16 shrink-0 items-center justify-between bg-white px-4 shadow-sm sm:px-6">
+                <div class="flex items-center gap-5 text-primary">
+                    <button type="button" class="text-2xl leading-none" title="{% trans 'Read' %}">▶</button>
+                    <span class="text-xl leading-none">▮</span>
+                    <span class="text-xl leading-none">☷</span>
+                    <span class="text-xl leading-none">▦</span>
+                    <span class="text-xl leading-none">🔊</span>
+                </div>
+                <div class="flex items-center gap-5 text-primary">
+                    <a :href="readerDownload" download class="text-xl leading-none" title="{% trans 'Download' %}">⬇</a>
+                    <button type="button" @click="closeReader()" class="text-3xl font-bold leading-none" aria-label="{% trans 'Close reader' %}">×</button>
+                </div>
+            </div>
+            <iframe
+                :src="readerUrl"
+                class="h-full w-full border-0"
+                title="{% trans 'Book reader' %}"
+                allowfullscreen
+            ></iframe>
         </div>
     </div>
 </section>
