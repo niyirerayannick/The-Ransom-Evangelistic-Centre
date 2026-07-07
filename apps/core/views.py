@@ -17,7 +17,14 @@ class HomeView(TemplateView):
         language = normalize_language_code(get_language())
         base_posts = posts_for_language(language)
 
-        featured_post = base_posts.filter(is_featured=True).first() or base_posts.first()
+        featured_posts = list(base_posts.filter(is_featured=True)[:5])
+        featured_ids = {post.pk for post in featured_posts}
+        if len(featured_posts) < 5:
+            featured_posts.extend(
+                base_posts.exclude(pk__in=featured_ids)[: 5 - len(featured_posts)]
+            )
+        featured_ids = {post.pk for post in featured_posts}
+
         now = timezone.now()
         active_ads = Advertisement.objects.filter(is_active=True).filter(
             Q(start_date__isnull=True) | Q(start_date__lte=now),
@@ -26,7 +33,8 @@ class HomeView(TemplateView):
 
         context.update({
             "current_language": language,
-            "featured_post": featured_post,
+            "featured_post": featured_posts[0] if featured_posts else None,
+            "featured_posts": featured_posts,
             "church_posts": posts_for_home_section("church", 3, language),
             "leadership_posts": posts_for_home_section("leadership", 3, language),
             "family_posts": posts_for_home_section("family", 5, language),
@@ -37,7 +45,7 @@ class HomeView(TemplateView):
             "family_category": category_for_home_section("family", language),
             "criticism_category": category_for_home_section("constructive-criticism", language),
             "healing_category": category_for_home_section("healing", language),
-            "latest_posts": list(base_posts[:4]),
+            "latest_posts": list(base_posts.exclude(pk__in=featured_ids)[:4]),
             "who_we_are": (
                 HomepageSection.objects.filter(is_active=True, key=WHO_WE_ARE_KEY).first()
                 or sync_who_we_are_section()

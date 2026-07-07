@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "book_reader_base.html" %}
 {% load i18n %}
 
 {% block title %}{{ book.title }} - {{ site_settings.site_name|default:"The Ransom Evangelistic Centre" }}{% endblock %}
@@ -6,209 +6,675 @@
 
 {% block extra_head %}
 <style>
-    body > header,
-    body > footer {
-        display: none !important;
+    html, body { height: 100%; overflow: hidden; }
+    .reader-app {
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        height: 100dvh;
+        background: #4f4f4f;
+    }
+    .reader-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        min-height: 52px;
+        padding: 0 1rem;
+        background: #fff;
+        box-shadow: 0 1px 0 rgba(0,0,0,.08);
+        flex-shrink: 0;
+        z-index: 40;
+    }
+    .reader-toolbar-group {
+        display: flex;
+        align-items: center;
+        gap: 0.15rem;
+    }
+    .reader-tool-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 0.35rem;
+        color: #d39200;
+        font-size: 1.05rem;
+        line-height: 1;
+        transition: background .15s ease, color .15s ease;
+    }
+    .reader-tool-btn:hover,
+    .reader-tool-btn.is-active {
+        background: rgba(211, 146, 0, 0.12);
+        color: #b87900;
+    }
+    .reader-tool-btn:disabled {
+        opacity: 0.35;
+        pointer-events: none;
+    }
+
+    .reader-stage {
+        position: relative;
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        min-height: 0;
+    }
+    .reader-bg-grid {
+        position: absolute;
+        inset: 0;
+        background:
+            linear-gradient(rgba(255,255,255,.03) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255,255,255,.03) 1px, transparent 1px);
+        background-size: 48px 64px;
+        opacity: 0.45;
+        pointer-events: none;
+    }
+    .reader-bg-stack {
+        position: absolute;
+        inset: 8% 12%;
+        border: 1px solid rgba(255,255,255,.06);
+        border-radius: 0.25rem;
+        box-shadow:
+            12px 12px 0 rgba(0,0,0,.08),
+            24px 24px 0 rgba(0,0,0,.05),
+            36px 36px 0 rgba(0,0,0,.03);
+        pointer-events: none;
+    }
+
+    .reader-nav {
+        position: absolute;
+        top: 50%;
+        z-index: 30;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 3.25rem;
+        height: 3.25rem;
+        border-radius: 999px;
+        background: rgba(0, 0, 0, 0.72);
+        color: #d39200;
+        font-size: 2rem;
+        font-weight: 700;
+        line-height: 1;
+        transform: translateY(-50%);
+        box-shadow: 0 8px 24px rgba(0,0,0,.35);
+        transition: background .15s ease, transform .15s ease;
+    }
+    .reader-nav:hover:not(:disabled) {
+        background: rgba(0, 0, 0, 0.88);
+        transform: translateY(-50%) scale(1.05);
+    }
+    .reader-nav:disabled { opacity: 0.35; cursor: not-allowed; }
+    .reader-nav--prev { left: 1rem; }
+    .reader-nav--next { right: 1rem; }
+
+    .book-scene {
+        position: relative;
+        z-index: 10;
+        perspective: 2400px;
+        perspective-origin: 50% 45%;
+        width: min(92vw, 980px);
+        transition: transform 0.25s ease;
+    }
+    .book-stage { transform-style: preserve-3d; }
+    .book-shell {
+        position: relative;
+        border-radius: 0.2rem;
+        background: #ece8e0;
+        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+        padding: 0.5rem;
+        transform-style: preserve-3d;
+    }
+    .book-shell::before {
+        content: "";
+        position: absolute;
+        inset: 0.5rem 49.6% 0.5rem 49.6%;
+        width: 2px;
+        margin: auto;
+        background: linear-gradient(180deg, rgba(0,0,0,.25), rgba(255,255,255,.15), rgba(0,0,0,.3));
+        z-index: 5;
+        pointer-events: none;
+    }
+    .book-spread {
+        position: relative;
+        display: grid;
+        grid-template-columns: 1fr;
+        min-height: min(72vh, 680px);
+        transform-style: preserve-3d;
+    }
+    @media (min-width: 768px) {
+        .book-spread.is-spread { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 767px) {
+        .book-shell::before { display: none; }
+        .reader-nav { width: 2.75rem; height: 2.75rem; font-size: 1.65rem; }
+        .reader-nav--prev { left: 0.35rem; }
+        .reader-nav--next { right: 0.35rem; }
+    }
+    .book-page {
+        position: relative;
+        display: flex;
+        min-height: min(72vh, 680px);
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        background: #fff;
+        transition: opacity 0.2s ease;
+    }
+    .book-page img {
+        display: block;
+        max-height: min(68vh, 640px);
+        width: auto;
+        max-width: 100%;
+        object-fit: contain;
+        user-select: none;
+        -webkit-user-drag: none;
+    }
+    .page-flip-layer {
+        position: absolute;
+        inset: 0.5rem;
+        pointer-events: none;
+        z-index: 20;
+        transform-style: preserve-3d;
+    }
+    .page-flip-sheet {
+        position: absolute;
+        top: 0; bottom: 0;
+        width: 50%;
+        transform-style: preserve-3d;
+        transition: transform 0.9s cubic-bezier(0.42, 0.02, 0.21, 0.99);
+        filter: drop-shadow(0 16px 24px rgba(0, 0, 0, 0.28));
+    }
+    .page-flip-sheet--forward { left: 50%; transform-origin: left center; }
+    .page-flip-sheet--backward { left: 0; transform-origin: right center; }
+    .page-flip-sheet.is-active.page-flip-sheet--forward { transform: rotateY(-180deg); }
+    .page-flip-sheet.is-active.page-flip-sheet--backward { transform: rotateY(180deg); }
+    .page-flip-sheet--single { left: 0; width: 100%; transform-origin: right center; }
+    .page-flip-sheet--single.is-active { transform: rotateY(-180deg); }
+    .page-flip-sheet--single-back { left: 0; width: 100%; transform-origin: left center; }
+    .page-flip-sheet--single-back.is-active { transform: rotateY(180deg); }
+    .page-flip-face {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        backface-visibility: hidden;
+        background: #fff;
+    }
+    .page-flip-face img {
+        max-height: min(68vh, 640px);
+        width: auto;
+        max-width: 100%;
+        object-fit: contain;
+    }
+    .page-flip-face--back { transform: rotateY(180deg); }
+
+    .reader-footer {
+        position: relative;
+        z-index: 40;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: 0.65rem 1rem 0.85rem;
+        flex-shrink: 0;
+    }
+    .reader-page-badge {
+        display: inline-flex;
+        align-items: center;
+        min-height: 2.25rem;
+        padding: 0 0.85rem;
+        border-radius: 0.35rem;
+        background: rgba(0, 0, 0, 0.55);
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: #fff;
+        letter-spacing: 0.02em;
+    }
+    .reader-footer-controls {
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+    }
+    .reader-footer-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 2.25rem;
+        height: 2.25rem;
+        padding: 0 0.55rem;
+        border-radius: 0.35rem;
+        background: rgba(0, 0, 0, 0.55);
+        color: #fff;
+        font-size: 0.95rem;
+        font-weight: 700;
+        transition: background .15s ease;
+    }
+    .reader-footer-btn:hover { background: rgba(0, 0, 0, 0.72); }
+
+    .reader-thumbs {
+        position: absolute;
+        inset: 0;
+        z-index: 50;
+        background: rgba(0,0,0,.82);
+        overflow-y: auto;
+        padding: 1.25rem;
+    }
+    .reader-thumbs-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 0.85rem;
+        max-width: 1100px;
+        margin: 0 auto;
+    }
+    .reader-thumb {
+        cursor: pointer;
+        border: 2px solid transparent;
+        border-radius: 0.35rem;
+        overflow: hidden;
+        background: #fff;
+        transition: border-color .15s ease, transform .15s ease;
+    }
+    .reader-thumb:hover { border-color: #d39200; transform: translateY(-2px); }
+    .reader-thumb img { display: block; width: 100%; height: auto; }
+    .reader-thumb-label {
+        padding: 0.35rem;
+        text-align: center;
+        font-size: 10px;
+        font-weight: 700;
+        color: #444;
+        background: #f5f5f5;
+    }
+
+    .reader-status {
+        position: absolute;
+        top: 1rem;
+        left: 50%;
+        z-index: 35;
+        transform: translateX(-50%);
+        max-width: 90%;
+        padding: 0.55rem 1rem;
+        border-radius: 0.5rem;
+        background: rgba(180, 83, 9, 0.92);
+        font-size: 0.8rem;
+        color: #fff;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .page-flip-sheet { transition: none; }
+    }
+    @media print {
+        .reader-toolbar, .reader-footer, .reader-nav, .reader-thumbs, .reader-status, .reader-bg-grid, .reader-bg-stack { display: none !important; }
+        .reader-app, .reader-stage { height: auto; overflow: visible; background: #fff; }
+        .book-scene { width: 100%; transform: none !important; }
+        .book-spread.is-spread { grid-template-columns: 1fr 1fr; }
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<section
-    class="fixed inset-0 z-[300] min-h-screen overflow-y-auto bg-[#3d3a39] text-white"
-    x-data="pdfReader('{{ book.download_file.url|escapejs }}')"
+<div
+    class="reader-app"
+    x-data="bookSlider({{ page_count }}, '{{ page_image_prefix|escapejs }}')"
     x-init="init()"
     @keydown.arrow-left.window="previousSpread()"
     @keydown.arrow-right.window="nextSpread()"
+    @keydown.escape.window="showThumbnails && toggleThumbnails()"
+    @touchstart.passive="onTouchStart($event)"
+    @touchend.passive="onTouchEnd($event)"
 >
-    <div class="sticky top-0 z-30 border-b border-white/10 bg-[#222222]/95 backdrop-blur">
-        <div class="site-container flex flex-col gap-4 py-4 lg:flex-row lg:items-center lg:justify-between">
-            <div class="min-w-0">
-                <a href="{% url 'pages:page_detail' slug='books' %}" class="text-[11px] font-bold uppercase tracking-[.18em] text-primary hover:text-white">{% trans "Back to books" %}</a>
-                <h1 class="mt-1 truncate text-xl font-bold newspaper-heading sm:text-2xl">{{ book.title }}</h1>
-                <p class="mt-1 text-xs text-gray-400">{% trans "By" %} {{ book.author }}</p>
-            </div>
-
-            <div class="flex flex-wrap items-center gap-2">
-                <button type="button" @click="previousSpread()" class="rounded-full border border-white/15 px-4 py-2 text-xs font-bold uppercase tracking-wider hover:border-primary hover:text-primary">{% trans "Prev" %}</button>
-                <div class="rounded-full bg-white/10 px-4 py-2 text-xs font-bold">
-                    <span x-text="pageLabel()"></span>
-                </div>
-                <button type="button" @click="nextSpread()" class="rounded-full border border-white/15 px-4 py-2 text-xs font-bold uppercase tracking-wider hover:border-primary hover:text-primary">{% trans "Next" %}</button>
-                <button type="button" @click="zoomOut()" class="flex h-10 w-10 items-center justify-center rounded-full border border-white/15 text-lg font-bold hover:border-primary hover:text-primary" aria-label="{% trans 'Zoom out' %}">-</button>
-                <button type="button" @click="zoomIn()" class="flex h-10 w-10 items-center justify-center rounded-full border border-white/15 text-lg font-bold hover:border-primary hover:text-primary" aria-label="{% trans 'Zoom in' %}">+</button>
-                <a href="{{ book.download_file.url }}" download class="rounded-full bg-primary px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-white hover:bg-primary-dark">{% trans "Download PDF" %}</a>
-            </div>
+    <header class="reader-toolbar">
+        <div class="reader-toolbar-group">
+            <button type="button" class="reader-tool-btn" :class="{ 'is-active': autoplay }" @click="toggleAutoplay()" title="{% trans 'Auto turn pages' %}" aria-label="{% trans 'Auto turn pages' %}">▶</button>
+            <button type="button" class="reader-tool-btn" disabled title="{% trans 'Bookmark coming soon' %}" aria-label="{% trans 'Bookmark' %}">🔖</button>
+            <button type="button" class="reader-tool-btn" @click="toggleThumbnails()" :class="{ 'is-active': showThumbnails }" title="{% trans 'Page list' %}" aria-label="{% trans 'Page list' %}">☰</button>
+            <button type="button" class="reader-tool-btn" @click="toggleThumbnails()" :class="{ 'is-active': showThumbnails }" title="{% trans 'Page thumbnails' %}" aria-label="{% trans 'Page thumbnails' %}">▦</button>
+            <button type="button" class="reader-tool-btn" disabled title="{% trans 'Audio coming soon' %}" aria-label="{% trans 'Audio' %}">🔊</button>
         </div>
-
-        <div class="site-container pb-4">
-            <input
-                type="range"
-                min="1"
-                :max="pageCount || 1"
-                step="2"
-                x-model.number="spreadStart"
-                @input="queueRenderSpread(spreadStart)"
-                class="h-2 w-full cursor-pointer accent-primary"
-                aria-label="{% trans 'Page slider' %}"
-            >
+        <div class="reader-toolbar-group">
+            <button type="button" class="reader-tool-btn" @click="shareBook()" title="{% trans 'Share' %}" aria-label="{% trans 'Share' %}">⤴</button>
+            <button type="button" class="reader-tool-btn" @click="printBook()" title="{% trans 'Print' %}" aria-label="{% trans 'Print' %}">⎙</button>
+            <a href="{% url 'pages:book_pdf' slug=book.slug %}" download class="reader-tool-btn" title="{% trans 'Download PDF' %}" aria-label="{% trans 'Download PDF' %}">⬇</a>
+            <a href="{% url 'pages:page_detail' slug=books_page_slug %}" class="reader-tool-btn" title="{% trans 'Close reader' %}" aria-label="{% trans 'Close reader' %}">×</a>
         </div>
-    </div>
+    </header>
 
-    <div class="site-container py-8">
-        <div class="mx-auto max-w-7xl">
-            <div class="mb-4 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-gray-300" x-show="status" x-text="status"></div>
-            <div class="relative overflow-hidden rounded-2xl border border-white/10 bg-[#151515] p-3 shadow-2xl sm:p-6">
-                <button type="button" @click="previousSpread()" class="absolute inset-y-0 left-0 z-10 hidden w-20 bg-gradient-to-r from-black/30 to-transparent text-left text-4xl font-bold text-white/50 transition hover:text-primary lg:block" aria-label="{% trans 'Previous pages' %}">‹</button>
-                <button type="button" @click="nextSpread()" class="absolute inset-y-0 right-0 z-10 hidden w-20 bg-gradient-to-l from-black/30 to-transparent text-right text-4xl font-bold text-white/50 transition hover:text-primary lg:block" aria-label="{% trans 'Next pages' %}">›</button>
+    <div class="reader-stage">
+        <div class="reader-bg-grid"></div>
+        <div class="reader-bg-stack"></div>
 
-                <div class="mx-auto flex max-w-6xl items-stretch justify-center rounded-xl bg-[#0f0f0f] p-2 sm:p-4" :class="{ 'opacity-60': pageRendering }">
-                    <div class="grid w-full gap-0 overflow-hidden rounded-lg bg-[#d8d2c6] shadow-2xl lg:grid-cols-2">
-                        <div x-ref="leftPagePanel" class="relative flex min-h-[360px] items-center justify-center bg-white p-2 shadow-[inset_-18px_0_28px_rgba(0,0,0,.10)] sm:p-4">
-                            <canvas x-ref="leftCanvas" class="block bg-white"></canvas>
-                            <span class="absolute bottom-3 left-4 rounded-full bg-black/5 px-3 py-1 text-[10px] font-bold text-gray-500" x-text="spreadStart"></span>
+        <div class="reader-status" x-show="status" x-text="status" x-cloak></div>
+
+        <button type="button" class="reader-nav reader-nav--prev" @click="previousSpread()" :disabled="isFlipping || spreadStart <= 1" aria-label="{% trans 'Previous page' %}">‹</button>
+        <button type="button" class="reader-nav reader-nav--next" @click="nextSpread()" :disabled="isFlipping || spreadStart + stepSize() > pageCount" aria-label="{% trans 'Next page' %}">›</button>
+
+        <div class="book-scene" :style="{ transform: `scale(${zoom})` }">
+            <div class="book-stage">
+                <div class="book-shell">
+                    <div class="book-spread" :class="spreadView && showRightPage ? 'is-spread' : ''">
+                        <div class="book-page" :class="{ 'opacity-0': isFlipping && (flipMode === 'backward' || (!spreadView && flipMode === 'forward')) }">
+                            <div x-show="loadingLeft" class="absolute inset-0 flex items-center justify-center text-sm text-gray-400">{% trans "Loading..." %}</div>
+                            <img x-show="leftImageUrl && !loadingLeft" :src="leftImageUrl" :alt="`Page ${spreadStart}`" @load="loadingLeft = false" @error="onImageError()">
                         </div>
-                        <div x-ref="rightPagePanel" class="relative hidden min-h-[360px] items-center justify-center bg-white p-2 shadow-[inset_18px_0_28px_rgba(0,0,0,.10)] sm:p-4 lg:flex" x-show="rightPage() <= pageCount">
-                            <canvas x-ref="rightCanvas" class="block bg-white"></canvas>
-                            <span class="absolute bottom-3 right-4 rounded-full bg-black/5 px-3 py-1 text-[10px] font-bold text-gray-500" x-text="rightPage()"></span>
+                        <div x-show="spreadView && showRightPage" x-cloak class="book-page" :class="{ 'opacity-0': isFlipping && flipMode === 'forward' }">
+                            <div x-show="loadingRight" class="absolute inset-0 flex items-center justify-center text-sm text-gray-400">{% trans "Loading..." %}</div>
+                            <img x-show="rightImageUrl && !loadingRight" :src="rightImageUrl" :alt="`Page ${rightPage()}`" @load="loadingRight = false" @error="onImageError()">
                         </div>
-                        <div class="relative hidden min-h-[360px] items-center justify-center bg-[#f4f1ea] p-8 text-center text-sm text-gray-500 lg:flex" x-show="rightPage() > pageCount">
+                        <div x-show="spreadView && !showRightPage && rightPage() > pageCount" x-cloak class="book-page items-center justify-center bg-[#f4f1ea] p-8 text-center text-sm text-gray-500">
                             {% trans "End of book" %}
                         </div>
                     </div>
-                </div>
 
-                <div class="mt-5 flex justify-center gap-3 lg:hidden">
-                    <button type="button" @click="previousSpread()" class="rounded-full border border-white/15 px-5 py-2.5 text-xs font-bold uppercase tracking-wider hover:border-primary hover:text-primary">{% trans "Previous" %}</button>
-                    <button type="button" @click="nextSpread()" class="rounded-full bg-primary px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-white hover:bg-primary-dark">{% trans "Next" %}</button>
+                    <div class="page-flip-layer" x-show="isFlipping" x-cloak>
+                        <div
+                            class="page-flip-sheet"
+                            :class="[
+                                flipMode === 'forward' && spreadView ? 'page-flip-sheet--forward' : '',
+                                flipMode === 'backward' && spreadView ? 'page-flip-sheet--backward' : '',
+                                flipMode === 'forward' && !spreadView ? 'page-flip-sheet--single' : '',
+                                flipMode === 'backward' && !spreadView ? 'page-flip-sheet--single-back' : '',
+                                flipActive ? 'is-active' : '',
+                            ]"
+                        >
+                            <div class="page-flip-face"><img :src="flipFrontUrl" alt=""></div>
+                            <div class="page-flip-face page-flip-face--back"><img :src="flipBackUrl" alt=""></div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-</section>
+
+    <footer class="reader-footer">
+        <div class="reader-page-badge" x-text="pageLabel()"></div>
+        <div class="reader-footer-controls">
+            <button type="button" class="reader-footer-btn" @click="zoomOut()" aria-label="{% trans 'Zoom out' %}">−</button>
+            <button type="button" class="reader-footer-btn" @click="zoomIn()" aria-label="{% trans 'Zoom in' %}">+</button>
+            <button type="button" class="reader-footer-btn" @click="toggleFullscreen()" aria-label="{% trans 'Full screen' %}">⛶</button>
+        </div>
+    </footer>
+
+    <div class="reader-thumbs" x-show="showThumbnails" x-cloak @click.self="toggleThumbnails()">
+        <div class="mb-4 flex items-center justify-between text-white">
+            <h2 class="text-lg font-bold">{% trans "All pages" %}</h2>
+            <button type="button" class="reader-footer-btn" @click="toggleThumbnails()">×</button>
+        </div>
+        <div class="reader-thumbs-grid">
+            <template x-for="page in pageList" :key="page">
+                <button type="button" class="reader-thumb" @click="jumpFromThumb(page)">
+                    <img :src="pageUrl(page)" :alt="`Page ${page}`" loading="lazy">
+                    <div class="reader-thumb-label" x-text="page"></div>
+                </button>
+            </template>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_scripts %}
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script>
-pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
-window.pdfReader = function (url) {
-    return {
-        pdfDoc: null,
-        spreadStart: 1,
-        pageCount: 0,
-        pageRendering: false,
-        spreadPending: null,
-        zoom: 1,
-        status: "{% trans 'Loading PDF...' %}",
-        async init() {
-            try {
-                this.pdfDoc = await pdfjsLib.getDocument(url).promise;
-                this.pageCount = this.pdfDoc.numPages;
-                this.status = "";
-                await this.$nextTick();
-                this.renderSpread(this.spreadStart);
-            } catch (error) {
-                this.status = "{% trans 'Unable to load this PDF right now.' %}";
-            }
-        },
-        rightPage() {
-            return this.spreadStart + 1;
-        },
-        pageLabel() {
-            if (!this.pageCount) return "-";
-            const end = Math.min(this.rightPage(), this.pageCount);
-            return this.spreadStart === end
-                ? `${this.spreadStart} / ${this.pageCount}`
-                : `${this.spreadStart}-${end} / ${this.pageCount}`;
-        },
-        fitViewport(page, panelRef) {
-            const panel = this.$refs[panelRef];
-            const base = page.getViewport({ scale: 1 });
-            const panelWidth = Math.max((panel ? panel.clientWidth : 640) - 32, 280);
-            const panelHeight = Math.max(Math.min(window.innerHeight * 0.78, 900), 360);
-            const fit = Math.min(panelWidth / base.width, panelHeight / base.height);
-            return page.getViewport({ scale: Math.max(fit * this.zoom, 0.25) });
-        },
-        async renderPdfPage(num, canvasRef, panelRef) {
-            if (!this.pdfDoc || num > this.pageCount) return;
-            const page = await this.pdfDoc.getPage(num);
-            const canvas = this.$refs[canvasRef];
-            const context = canvas.getContext("2d");
-            const viewport = this.fitViewport(page, panelRef);
-            const outputScale = window.devicePixelRatio || 1;
-            canvas.width = Math.floor(viewport.width * outputScale);
-            canvas.height = Math.floor(viewport.height * outputScale);
-            canvas.style.width = `${Math.floor(viewport.width)}px`;
-            canvas.style.height = `${Math.floor(viewport.height)}px`;
-            context.fillStyle = "#ffffff";
-            context.fillRect(0, 0, canvas.width, canvas.height);
-            context.setTransform(outputScale, 0, 0, outputScale, 0, 0);
-            await page.render({
-                canvasContext: context,
-                viewport,
-                background: "#ffffff",
-            }).promise;
-        },
-        clearCanvas(canvasRef) {
-            const canvas = this.$refs[canvasRef];
-            const context = canvas.getContext("2d");
-            context.clearRect(0, 0, canvas.width, canvas.height);
-            canvas.width = 1;
-            canvas.height = 1;
-        },
-        async renderSpread(num) {
-            if (!this.pdfDoc) return;
-            this.pageRendering = true;
-            this.status = "";
-            try {
-                await this.renderPdfPage(num, "leftCanvas", "leftPagePanel");
-                if (num + 1 <= this.pageCount) {
-                    await this.renderPdfPage(num + 1, "rightCanvas", "rightPagePanel");
-                } else {
-                    this.clearCanvas("rightCanvas");
-                }
-            } catch (error) {
-                this.status = "{% trans 'Unable to render these pages. Try zooming out or reloading the reader.' %}";
-            } finally {
-                this.pageRendering = false;
-                if (this.spreadPending !== null) {
-                    const pending = this.spreadPending;
-                    this.spreadPending = null;
-                    this.renderSpread(pending);
-                }
-            }
-        },
-        normalizeSpread(num) {
-            const next = Math.min(Math.max(Number(num) || 1, 1), this.pageCount || 1);
-            return next % 2 === 0 ? Math.max(next - 1, 1) : next;
-        },
-        queueRenderSpread(num) {
-            const next = this.normalizeSpread(num);
-            this.spreadStart = next;
-            if (this.pageRendering) {
-                this.spreadPending = next;
-            } else {
-                this.renderSpread(next);
-            }
-        },
-        previousSpread() {
-            if (this.spreadStart <= 1) return;
-            this.queueRenderSpread(this.spreadStart - 2);
-        },
-        nextSpread() {
-            if (!this.pageCount || this.spreadStart + 2 > this.pageCount) return;
-            this.queueRenderSpread(this.spreadStart + 2);
-        },
-        zoomIn() {
-            this.zoom = Math.min(this.zoom + 0.1, 1.8);
-            this.queueRenderSpread(this.spreadStart);
-        },
-        zoomOut() {
-            this.zoom = Math.max(this.zoom - 0.1, 0.55);
-            this.queueRenderSpread(this.spreadStart);
-        },
-    };
+window.bookSlider = function (pageCount, pageImagePrefix) {
+  const FLIP_MS = 900;
+
+  return {
+    pageCount,
+    pageImagePrefix,
+    spreadStart: 1,
+    spreadView: false,
+    touchStartX: 0,
+    leftImageUrl: "",
+    rightImageUrl: "",
+    loadingLeft: true,
+    loadingRight: false,
+    showRightPage: false,
+    status: "",
+    isFlipping: false,
+    flipActive: false,
+    flipMode: "forward",
+    flipFrontUrl: "",
+    flipBackUrl: "",
+    reducedMotion: false,
+    zoom: 1,
+    autoplay: false,
+    autoplayTimer: null,
+    showThumbnails: false,
+    pageList: [],
+
+    pageUrl(num) {
+      return `${this.pageImagePrefix}${num}/`;
+    },
+
+    bindViewportMode() {
+      const media = window.matchMedia("(min-width: 768px)");
+      const apply = () => {
+        const wasSpread = this.spreadView;
+        this.spreadView = media.matches;
+        if (wasSpread !== this.spreadView && !this.isFlipping) {
+          this.loadSpread(this.spreadStart, false);
+        }
+      };
+      apply();
+      media.addEventListener("change", apply);
+    },
+
+    init() {
+      this.pageList = Array.from({ length: this.pageCount }, (_, index) => index + 1);
+      this.reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      this.bindViewportMode();
+      this.loadSpread(1, false);
+      this.prefetchAround(1);
+    },
+
+    stepSize() {
+      return this.spreadView ? 2 : 1;
+    },
+
+    rightPage() {
+      return this.spreadView ? this.spreadStart + 1 : this.spreadStart;
+    },
+
+    pageLabel() {
+      if (!this.pageCount) return "-";
+      if (!this.spreadView) return `${this.spreadStart} / ${this.pageCount}`;
+      const end = Math.min(this.rightPage(), this.pageCount);
+      return this.spreadStart === end
+        ? `${this.spreadStart} / ${this.pageCount}`
+        : `${this.spreadStart}-${end} / ${this.pageCount}`;
+    },
+
+    normalizePage(num) {
+      const next = Math.min(Math.max(Number(num) || 1, 1), this.pageCount);
+      if (!this.spreadView) return next;
+      return next % 2 === 0 ? Math.max(next - 1, 1) : next;
+    },
+
+    prefetch(num) {
+      if (num < 1 || num > this.pageCount) return;
+      const img = new Image();
+      img.src = this.pageUrl(num);
+    },
+
+    prefetchAround(num) {
+      [num - 2, num - 1, num, num + 1, num + 2, num + 3].forEach((page) => this.prefetch(page));
+    },
+
+    loadImage(url) {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve(url);
+        img.onerror = reject;
+        img.src = url;
+      });
+    },
+
+    loadSpread(num, bustCache = true) {
+      this.status = "";
+      const pageNum = this.normalizePage(num);
+      this.spreadStart = pageNum;
+      const suffix = bustCache ? `?t=${Date.now()}` : "";
+      this.loadingLeft = true;
+      this.leftImageUrl = `${this.pageUrl(pageNum)}${suffix}`;
+      if (this.spreadView && pageNum + 1 <= this.pageCount) {
+        this.showRightPage = true;
+        this.loadingRight = true;
+        this.rightImageUrl = `${this.pageUrl(pageNum + 1)}${suffix}`;
+      } else {
+        this.showRightPage = false;
+        this.rightImageUrl = "";
+        this.loadingRight = false;
+      }
+      this.prefetchAround(pageNum);
+    },
+
+    async runFlip(mode, targetPage) {
+      if (this.isFlipping) return;
+      const nextPage = this.normalizePage(targetPage);
+      if (nextPage === this.spreadStart) return;
+      if (this.reducedMotion) {
+        this.loadSpread(nextPage, false);
+        return;
+      }
+      this.isFlipping = true;
+      this.flipActive = false;
+      this.flipMode = mode;
+      try {
+        if (mode === "forward") {
+          if (this.spreadView) {
+            this.flipFrontUrl = await this.loadImage(this.pageUrl(this.rightPage()));
+            this.flipBackUrl = await this.loadImage(this.pageUrl(nextPage));
+          } else {
+            this.flipFrontUrl = await this.loadImage(this.pageUrl(this.spreadStart));
+            this.flipBackUrl = await this.loadImage(this.pageUrl(nextPage));
+          }
+        } else {
+          if (this.spreadView) {
+            this.flipFrontUrl = await this.loadImage(this.pageUrl(this.spreadStart));
+            this.flipBackUrl = await this.loadImage(this.pageUrl(Math.max(this.spreadStart - 1, 1)));
+          } else {
+            this.flipFrontUrl = await this.loadImage(this.pageUrl(this.spreadStart));
+            this.flipBackUrl = await this.loadImage(this.pageUrl(Math.max(nextPage, 1)));
+          }
+        }
+        await this.$nextTick();
+        requestAnimationFrame(() => { this.flipActive = true; });
+        window.setTimeout(() => {
+          this.loadSpread(nextPage, false);
+          this.flipActive = false;
+          this.isFlipping = false;
+        }, FLIP_MS);
+      } catch (error) {
+        this.isFlipping = false;
+        this.flipActive = false;
+        this.status = "{% trans 'Unable to load this page.' %}";
+        this.loadSpread(nextPage, false);
+      }
+    },
+
+    jumpToPage(num) {
+      if (this.isFlipping) return;
+      const target = this.normalizePage(num);
+      if (target === this.spreadStart) return;
+      const mode = target > this.spreadStart ? "forward" : "backward";
+      this.runFlip(mode, target);
+    },
+
+    jumpFromThumb(page) {
+      this.showThumbnails = false;
+      document.body.classList.remove("overflow-hidden");
+      this.jumpToPage(page);
+    },
+
+    previousSpread() {
+      if (this.spreadStart <= 1 || this.isFlipping) return;
+      this.runFlip("backward", this.spreadStart - this.stepSize());
+    },
+
+    nextSpread() {
+      const next = this.spreadStart + this.stepSize();
+      if (next > this.pageCount || this.isFlipping) return;
+      this.runFlip("forward", next);
+    },
+
+    onImageError() {
+      this.loadingLeft = false;
+      this.loadingRight = false;
+      this.status = "{% trans 'Unable to load this page.' %}";
+    },
+
+    onTouchStart(event) {
+      this.touchStartX = event.changedTouches[0].screenX;
+    },
+
+    onTouchEnd(event) {
+      if (this.isFlipping || this.showThumbnails) return;
+      const delta = event.changedTouches[0].screenX - this.touchStartX;
+      if (Math.abs(delta) < 50) return;
+      if (delta < 0) this.nextSpread();
+      else this.previousSpread();
+    },
+
+    zoomIn() {
+      this.zoom = Math.min(Number((this.zoom + 0.1).toFixed(2)), 1.6);
+    },
+
+    zoomOut() {
+      this.zoom = Math.max(Number((this.zoom - 0.1).toFixed(2)), 0.7);
+    },
+
+    toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen?.();
+      } else {
+        document.exitFullscreen?.();
+      }
+    },
+
+    toggleAutoplay() {
+      this.autoplay = !this.autoplay;
+      if (this.autoplay) {
+        this.autoplayTimer = window.setInterval(() => {
+          if (this.spreadStart + this.stepSize() > this.pageCount) {
+            this.toggleAutoplay();
+            return;
+          }
+          this.nextSpread();
+        }, 4500);
+      } else if (this.autoplayTimer) {
+        window.clearInterval(this.autoplayTimer);
+        this.autoplayTimer = null;
+      }
+    },
+
+    toggleThumbnails() {
+      this.showThumbnails = !this.showThumbnails;
+      document.body.classList.toggle("overflow-hidden", this.showThumbnails);
+    },
+
+    async shareBook() {
+      const url = window.location.href;
+      const title = document.title;
+      try {
+        if (navigator.share) {
+          await navigator.share({ title, url });
+        } else {
+          await navigator.clipboard.writeText(url);
+          this.status = "{% trans 'Link copied to clipboard.' %}";
+          window.setTimeout(() => { this.status = ""; }, 2500);
+        }
+      } catch (error) {
+        /* user cancelled share */
+      }
+    },
+
+    printBook() {
+      window.print();
+    },
+  };
 };
 </script>
 {% endblock %}

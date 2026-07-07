@@ -1,0 +1,81 @@
+{% load i18n %}
+<div
+    x-show="open"
+    x-cloak
+    @keydown.escape.window="closeBook()"
+    class="fixed inset-0 z-[120] flex items-center justify-center p-4"
+    role="dialog"
+    aria-modal="true"
+    :aria-label="activeBook ? activeBook.title : '{% trans "Book details" %}'"
+>
+    <div class="absolute inset-0 bg-black/70" @click="closeBook()"></div>
+
+    <div
+        x-show="open"
+        x-transition
+        class="relative flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl"
+        @click.stop
+    >
+        <button type="button" @click="closeBook()" class="absolute right-4 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-xl font-bold text-ink shadow hover:bg-primary hover:text-white" aria-label="{% trans 'Close' %}">×</button>
+
+        <template x-if="activeBook">
+            <div class="overflow-y-auto">
+                <div class="grid md:grid-cols-[240px_1fr]">
+                    <div class="flex min-h-[320px] items-center justify-center bg-gradient-to-br from-primary/10 via-paper to-heading-blue/10 p-6 md:min-h-full">
+                        <img
+                            :src="activeBook.cover_image"
+                            :alt="activeBook.title"
+                            class="max-h-[360px] w-full rounded-xl object-cover shadow-lg"
+                            x-show="activeBook.cover_image"
+                        >
+                        <div
+                            class="flex min-h-[280px] w-full items-center justify-center rounded-xl bg-white/70 p-6 text-center text-lg font-bold leading-snug text-primary newspaper-heading"
+                            x-show="!activeBook.cover_image"
+                            x-text="activeBook.title"
+                        ></div>
+                    </div>
+
+                    <div class="p-6 sm:p-8">
+                        <div class="flex flex-wrap gap-2">
+                            <span x-show="activeBook.category" class="rounded-full bg-primary/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-primary" x-text="activeBook.category"></span>
+                            <span class="rounded-full bg-paper px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-gray-500" x-text="activeBook.language"></span>
+                            <span x-show="activeBook.published_at" class="rounded-full bg-paper px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-gray-500" x-text="activeBook.published_at"></span>
+                        </div>
+
+                        <h2 class="mt-4 text-2xl font-bold leading-tight text-ink newspaper-heading sm:text-3xl" x-text="activeBook.title"></h2>
+                        <p class="mt-2 text-sm text-gray-500">
+                            {% trans "By" %} <span x-text="activeBook.author"></span>
+                        </p>
+
+                        <div class="page-copy mt-5 text-sm leading-relaxed text-gray-600" x-html="activeBook.description" x-show="activeBook.description"></div>
+                        <p class="mt-5 text-sm text-gray-500" x-show="!activeBook.description">{% trans "No description available for this book yet." %}</p>
+
+                        <div class="mt-8 flex flex-wrap gap-3">
+                            <a
+                                x-show="activeBook.has_pdf"
+                                :href="activeBook.reader_url"
+                                class="inline-flex min-h-11 items-center rounded-full bg-primary px-6 py-2.5 text-[11px] font-bold uppercase tracking-wider text-white transition hover:bg-primary-dark"
+                            >
+                                {% trans "Read book" %}
+                            </a>
+                            <a
+                                x-show="activeBook.has_pdf"
+                                :href="activeBook.download_url"
+                                download
+                                class="inline-flex min-h-11 items-center rounded-full border border-gray-200 px-6 py-2.5 text-[11px] font-bold uppercase tracking-wider text-ink transition hover:border-primary hover:text-primary"
+                            >
+                                {% trans "Download" %}
+                            </a>
+                            <span
+                                x-show="!activeBook.has_pdf"
+                                class="inline-flex min-h-11 items-center rounded-full bg-gray-100 px-6 py-2.5 text-[11px] font-bold uppercase tracking-wider text-gray-400"
+                            >
+                                {% trans "PDF coming soon" %}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </template>
+    </div>
+</div>

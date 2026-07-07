@@ -7,8 +7,8 @@
 {% block content %}
 <section
     class="bg-paper py-14 md:py-16"
-    x-data="{ readerOpen: false, readerUrl: '', readerDownload: '', openReader(url, downloadUrl) { this.readerUrl = url; this.readerDownload = downloadUrl; this.readerOpen = true; document.body.classList.add('overflow-hidden'); }, closeReader() { this.readerOpen = false; this.readerUrl = ''; this.readerDownload = ''; document.body.classList.remove('overflow-hidden'); } }"
-    @keydown.escape.window="readerOpen && closeReader()"
+    x-data="bookLibrary()"
+    x-init="init()"
 >
     <div class="site-container">
         <div class="mx-auto max-w-3xl text-center">
@@ -32,82 +32,88 @@
             </button>
         </form>
 
-        <div class="mx-auto mt-10 max-w-4xl overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
+        {% if books %}
+        <div class="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {% for book in books %}
-            <article class="grid gap-4 border-b border-gray-100 p-5 last:border-b-0 sm:grid-cols-[88px_1fr_auto] sm:items-center">
-                <div class="flex h-28 w-20 items-center justify-center overflow-hidden rounded-lg bg-gradient-to-br from-primary/10 via-paper to-heading-blue/10 sm:h-32 sm:w-24">
+            <article class="group flex flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
+                <div class="relative aspect-[3/4] overflow-hidden bg-gradient-to-br from-primary/10 via-paper to-heading-blue/10">
                     {% if book.cover_image %}
-                    <img src="{{ book.cover_image.url }}" alt="{{ book.title }}" class="h-full w-full object-cover">
+                    <img src="{{ book.cover_image.url }}" alt="{{ book.title }}" class="h-full w-full object-cover transition duration-500 group-hover:scale-105">
                     {% else %}
-                    <span class="px-2 text-center text-xs font-bold text-primary newspaper-heading">{{ book.title|truncatechars:28 }}</span>
-                    {% endif %}
-                </div>
-
-                <div class="min-w-0">
-                    <div class="flex flex-wrap gap-2">
-                        {% if book.category %}
-                        <span class="rounded-full bg-primary/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-primary">{{ book.category.name }}</span>
-                        {% endif %}
-                        <span class="rounded-full bg-paper px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-gray-500">{{ book.get_language_display }}</span>
-                        {% if book.published_at %}<span class="rounded-full bg-paper px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-gray-500">{{ book.published_at|date:"M j, Y" }}</span>{% endif %}
+                    <div class="flex h-full items-center justify-center p-6 text-center">
+                        <span class="text-sm font-bold leading-snug text-primary newspaper-heading">{{ book.title|truncatechars:64 }}</span>
                     </div>
-                    <h2 class="mt-3 text-xl font-bold leading-tight text-ink newspaper-heading">{{ book.title }}</h2>
-                    <p class="mt-1 text-sm text-gray-500">{% trans "By" %} {{ book.author }}</p>
-                    {% if book.description %}
-                    <p class="mt-3 line-clamp-2 text-sm leading-relaxed text-gray-600">{{ book.description|striptags|truncatechars:180 }}</p>
+                    {% endif %}
+                    {% if book.category %}
+                    <span class="absolute left-3 top-3 rounded-full bg-white/95 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-primary shadow-sm">{{ book.category.name }}</span>
                     {% endif %}
                 </div>
 
-                <div class="flex flex-wrap gap-2 sm:justify-end">
-                    {% if book.download_file %}
-                    <button type="button" @click="openReader('{% url 'pages:book_reader' slug=book.slug %}', '{{ book.download_file.url }}')" class="inline-flex min-h-11 items-center rounded-full bg-primary px-5 py-2 text-[11px] font-bold uppercase tracking-wider text-white transition hover:bg-primary-dark">
-                        {% trans "Read book" %}
-                    </button>
-                    <a href="{{ book.download_file.url }}" download class="inline-flex min-h-11 items-center rounded-full border border-gray-200 px-5 py-2 text-[11px] font-bold uppercase tracking-wider text-ink transition hover:border-primary hover:text-primary">
-                        {% trans "Download" %}
-                    </a>
+                <div class="flex flex-1 flex-col p-5">
+                    <div class="flex flex-wrap gap-2">
+                        <span class="rounded-full bg-paper px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-gray-500">{{ book.get_language_display }}</span>
+                        {% if book.published_at %}
+                        <span class="rounded-full bg-paper px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-gray-500">{{ book.published_at|date:"M j, Y" }}</span>
+                        {% endif %}
+                    </div>
+
+                    <h2 class="mt-3 line-clamp-2 text-lg font-bold leading-snug text-ink newspaper-heading">{{ book.title }}</h2>
+                    <p class="mt-1 text-sm text-gray-500">{% trans "By" %} {{ book.author }}</p>
+
+                    {% if book.description %}
+                    <p class="mt-3 line-clamp-3 flex-1 text-sm leading-relaxed text-gray-600">{{ book.description|striptags|truncatechars:120 }}</p>
                     {% else %}
-                    <span class="inline-flex min-h-11 items-center rounded-full bg-gray-100 px-5 py-2 text-[11px] font-bold uppercase tracking-wider text-gray-400">
-                        {% trans "PDF coming soon" %}
-                    </span>
+                    <div class="flex-1"></div>
                     {% endif %}
+
+                    <button
+                        type="button"
+                        @click="openBook('{{ book.slug|escapejs }}')"
+                        class="mt-5 inline-flex min-h-11 w-full items-center justify-center rounded-full border border-primary/20 bg-primary/5 px-5 py-2.5 text-[11px] font-bold uppercase tracking-wider text-primary transition hover:bg-primary hover:text-white"
+                    >
+                        {% trans "View more" %}
+                    </button>
                 </div>
             </article>
-            {% empty %}
-            <p class="p-10 text-center text-gray-500">{% trans "No books match your search yet." %}</p>
             {% endfor %}
         </div>
+        {% else %}
+        <p class="mx-auto mt-10 max-w-4xl rounded-2xl border border-gray-100 bg-white p-10 text-center text-gray-500 shadow-sm">{% trans "No books match your search yet." %}</p>
+        {% endif %}
     </div>
 
-    <div
-        x-show="readerOpen"
-        x-cloak
-        class="fixed inset-0 z-[200] bg-black/70"
-        role="dialog"
-        aria-modal="true"
-        aria-label="{% trans 'Book reader' %}"
-    >
-        <div class="flex h-screen flex-col bg-[#3d3a39]">
-            <div class="flex h-16 shrink-0 items-center justify-between bg-white px-4 shadow-sm sm:px-6">
-                <div class="flex items-center gap-5 text-primary">
-                    <button type="button" class="text-2xl leading-none" title="{% trans 'Read' %}">▶</button>
-                    <span class="text-xl leading-none">▮</span>
-                    <span class="text-xl leading-none">☷</span>
-                    <span class="text-xl leading-none">▦</span>
-                    <span class="text-xl leading-none">🔊</span>
-                </div>
-                <div class="flex items-center gap-5 text-primary">
-                    <a :href="readerDownload" download class="text-xl leading-none" title="{% trans 'Download' %}">⬇</a>
-                    <button type="button" @click="closeReader()" class="text-3xl font-bold leading-none" aria-label="{% trans 'Close reader' %}">×</button>
-                </div>
-            </div>
-            <iframe
-                :src="readerUrl"
-                class="h-full w-full border-0"
-                title="{% trans 'Book reader' %}"
-                allowfullscreen
-            ></iframe>
-        </div>
-    </div>
+    {% include "partials/book_details_modal.html" %}
 </section>
+
+{{ books_modal_data|json_script:"books-modal-data" }}
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+window.bookLibrary = function () {
+  return {
+    open: false,
+    activeBook: null,
+    books: {},
+    init() {
+      const dataEl = document.getElementById("books-modal-data");
+      if (dataEl) {
+        this.books = JSON.parse(dataEl.textContent);
+      }
+    },
+    openBook(slug) {
+      this.activeBook = this.books[slug] || null;
+      this.open = Boolean(this.activeBook);
+      if (this.open) {
+        document.body.classList.add("overflow-hidden");
+      }
+    },
+    closeBook() {
+      this.open = false;
+      this.activeBook = null;
+      document.body.classList.remove("overflow-hidden");
+    },
+  };
+};
+</script>
 {% endblock %}

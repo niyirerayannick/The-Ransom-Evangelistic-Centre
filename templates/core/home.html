@@ -25,20 +25,74 @@
 
             <div>
                 <h2 class="rule-title mb-3 text-lg font-bold newspaper-heading">{% trans "Latest Publications" %}</h2>
-                {% if featured_post %}
-                <article class="group relative min-h-[300px] overflow-hidden border border-gray-200 bg-gray-300 lg:min-h-[355px]">
-                    <a href="{{ featured_post.get_absolute_url }}" class="absolute inset-0">
-                        {% if featured_post.featured_image %}<img src="{{ featured_post.featured_image.url }}" alt="{{ featured_post.title_for_language }}" class="h-full w-full object-cover transition duration-500 group-hover:scale-105">{% else %}<div class="h-full w-full bg-gradient-to-br from-gray-100 via-gray-300 to-gray-500"></div>{% endif %}
-                        <div class="absolute inset-0 bg-gradient-to-t from-black via-black/10 to-transparent"></div>
-                        <div class="absolute inset-x-0 bottom-0 p-4 sm:p-5">
-                            {% if featured_post.category %}<span class="inline-block bg-primary px-2 py-1 text-[10px] text-white">{{ featured_post.category.name }}</span>{% endif %}
-                            <h1 class="mt-2 text-2xl font-bold leading-tight text-white sm:text-3xl newspaper-heading">{{ featured_post.title_for_language }}</h1>
-                        </div>
-                    </a>
-                </article>
-        {% else %}
-        <div class="flex min-h-[300px] items-center justify-center border border-dashed border-gray-200 bg-gray-50 text-sm text-gray-500">{% trans "No articles available yet." %}</div>
-        {% endif %}
+                {% if featured_posts %}
+                <div
+                    class="relative min-h-[300px] overflow-hidden border border-gray-200 bg-gray-300 lg:min-h-[355px]"
+                    x-data="publicationsSlider({{ featured_posts|length }})"
+                    x-init="init()"
+                    @mouseenter="stopAutoplay()"
+                    @mouseleave="startAutoplay()"
+                    role="region"
+                    aria-roledescription="carousel"
+                    aria-label="{% trans 'Latest Publications' %}"
+                >
+                    {% for post in featured_posts %}
+                    <article
+                        class="group absolute inset-0"
+                        x-show="current === {{ forloop.counter0 }}"
+                        x-transition:enter="transition ease-out duration-500"
+                        x-transition:enter-start="opacity-0"
+                        x-transition:enter-end="opacity-100"
+                        x-transition:leave="transition ease-in duration-300"
+                        x-transition:leave-start="opacity-100"
+                        x-transition:leave-end="opacity-0"
+                        {% if not forloop.first %}x-cloak{% endif %}
+                        :aria-hidden="current !== {{ forloop.counter0 }}"
+                    >
+                        <a href="{{ post.get_absolute_url }}" class="absolute inset-0">
+                            {% if post.featured_image %}
+                            <img src="{{ post.featured_image.url }}" alt="{{ post.title_for_language }}" class="h-full w-full object-cover transition duration-500 group-hover:scale-105">
+                            {% else %}
+                            <div class="h-full w-full bg-gradient-to-br from-gray-100 via-gray-300 to-gray-500"></div>
+                            {% endif %}
+                            <div class="absolute inset-0 bg-gradient-to-t from-black via-black/10 to-transparent"></div>
+                            <div class="absolute inset-x-0 bottom-0 p-4 sm:p-5 {% if featured_posts|length > 1 %}pb-12{% endif %}">
+                                {% if post.category %}<span class="inline-block bg-primary px-2 py-1 text-[10px] text-white">{{ post.category.name }}</span>{% endif %}
+                                <h3 class="mt-2 text-2xl font-bold leading-tight text-white sm:text-3xl newspaper-heading">{{ post.title_for_language }}</h3>
+                            </div>
+                        </a>
+                    </article>
+                    {% endfor %}
+
+                    {% if featured_posts|length > 1 %}
+                    <button
+                        type="button"
+                        @click="prev()"
+                        class="absolute left-3 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/45 text-xl text-white transition hover:bg-primary"
+                        aria-label="{% trans 'Previous slide' %}"
+                    >‹</button>
+                    <button
+                        type="button"
+                        @click="next()"
+                        class="absolute right-3 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/45 text-xl text-white transition hover:bg-primary"
+                        aria-label="{% trans 'Next slide' %}"
+                    >›</button>
+                    <div class="absolute inset-x-0 bottom-3 z-10 flex justify-center gap-2">
+                        {% for post in featured_posts %}
+                        <button
+                            type="button"
+                            @click="goTo({{ forloop.counter0 }})"
+                            class="h-2 rounded-full transition-all duration-300"
+                            :class="current === {{ forloop.counter0 }} ? 'w-6 bg-primary' : 'w-2 bg-white/70 hover:bg-white'"
+                            aria-label="{% trans 'Go to slide' %} {{ forloop.counter }}"
+                        ></button>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                {% else %}
+                <div class="flex min-h-[300px] items-center justify-center border border-dashed border-gray-200 bg-gray-50 text-sm text-gray-500">{% trans "No articles available yet." %}</div>
+                {% endif %}
             </div>
 
             {% if leadership_posts %}
@@ -161,4 +215,39 @@
         </section>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function publicationsSlider(total) {
+    return {
+        current: 0,
+        total,
+        timer: null,
+        init() {
+            if (this.total > 1) this.startAutoplay();
+        },
+        startAutoplay() {
+            if (this.total <= 1) return;
+            this.stopAutoplay();
+            this.timer = setInterval(() => this.next(), 6000);
+        },
+        stopAutoplay() {
+            if (this.timer) {
+                clearInterval(this.timer);
+                this.timer = null;
+            }
+        },
+        next() {
+            this.current = (this.current + 1) % this.total;
+        },
+        prev() {
+            this.current = (this.current - 1 + this.total) % this.total;
+        },
+        goTo(index) {
+            this.current = index;
+        },
+    };
+}
+</script>
 {% endblock %}

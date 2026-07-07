@@ -1,5 +1,5 @@
 {% load i18n %}
-<header class="bg-white" x-data="{ mobileOpen: false }">
+<header class="border-b border-gray-100 bg-white shadow-sm" x-data="{ mobileOpen: false }">
     <div class="site-container flex min-h-28 items-center justify-between gap-8 py-5">
         <a href="{% url 'home' %}" class="shrink-0" aria-label="{{ site_settings.site_name|default:'Home' }}">
             {% if site_settings.logo %}
@@ -10,8 +10,14 @@
             {% endif %}
         </a>
 
-        <nav class="hidden items-center gap-7 text-[12px] font-semibold uppercase lg:flex" aria-label="{% trans 'Main navigation' %}">
+        <nav class="hidden items-center gap-6 text-[12px] font-semibold uppercase lg:flex" aria-label="{% trans 'Main navigation' %}">
             {% for menu in main_menu %}
+            {% if menu.page and menu.page.template_type == "donate" or "donate" in menu.get_url|lower %}
+            <a href="{{ menu.get_url }}" {% if menu.open_in_new_tab %}target="_blank" rel="noopener"{% endif %}
+               class="rounded-full bg-primary px-5 py-2.5 text-[11px] font-bold tracking-[.08em] text-white shadow-sm transition hover:bg-primary-dark">
+                {{ menu.title }}
+            </a>
+            {% else %}
             <div class="group relative">
                 <a href="{{ menu.get_url }}" {% if menu.open_in_new_tab %}target="_blank" rel="noopener"{% endif %}
                    class="flex items-center gap-1 py-5 text-ink transition hover:text-primary">
@@ -19,7 +25,7 @@
                     {% if menu.children.all %}<span class="text-[8px]">▼</span>{% endif %}
                 </a>
                 {% if menu.children.all %}
-                <div class="invisible absolute left-0 top-full z-50 min-w-56 translate-y-2 border-t-2 border-primary bg-white py-2 opacity-0 shadow-xl transition group-hover:visible group-hover:translate-y-0 group-hover:opacity-100">
+                <div class="invisible absolute left-0 top-full z-[70] min-w-56 translate-y-2 border-t-2 border-primary bg-white py-2 opacity-0 shadow-xl transition group-hover:visible group-hover:translate-y-0 group-hover:opacity-100">
                     {% for child in menu.children.all %}
                     <a href="{{ child.get_url }}" {% if child.open_in_new_tab %}target="_blank" rel="noopener"{% endif %}
                        class="block px-5 py-2.5 text-[12px] normal-case text-ink hover:bg-paper hover:text-primary">{{ child.title }}</a>
@@ -27,6 +33,7 @@
                 </div>
                 {% endif %}
             </div>
+            {% endif %}
             {% endfor %}
         </nav>
 
@@ -37,6 +44,12 @@
 
     <nav x-show="mobileOpen" x-collapse x-cloak class="border-t border-gray-100 bg-white px-4 pb-5 lg:hidden">
         {% for menu in main_menu %}
+        {% if menu.page and menu.page.template_type == "donate" or "donate" in menu.get_url|lower %}
+        <a href="{{ menu.get_url }}" {% if menu.open_in_new_tab %}target="_blank" rel="noopener"{% endif %}
+           class="mt-4 block rounded-full bg-primary py-3 text-center text-sm font-bold uppercase tracking-wider text-white transition hover:bg-primary-dark">
+            {{ menu.title }}
+        </a>
+        {% else %}
         <div x-data="{ open: false }" class="border-b border-gray-100">
             <div class="flex items-center">
                 <a href="{{ menu.get_url }}" class="flex-1 py-3 text-sm font-semibold uppercase">{{ menu.title }}</a>
@@ -48,6 +61,7 @@
             </div>
             {% endif %}
         </div>
+        {% endif %}
         {% endfor %}
     </nav>
 </header>

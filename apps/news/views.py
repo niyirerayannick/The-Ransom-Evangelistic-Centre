@@ -1,7 +1,7 @@
 from django.views.generic import ListView, DetailView
 from django.shortcuts import get_object_or_404
 from django.http import Http404
-from django.db.models import Q, Count
+from django.db.models import Q
 from django.utils import timezone
 from django.utils.translation import get_language
 
@@ -132,7 +132,7 @@ class CategoryView(ListView):
     model = Post
     template_name = "news/category_detail.html"
     context_object_name = "posts"
-    paginate_by = 9
+    paginate_by = 12
 
     def _resolve_category(self):
         slug = self.kwargs["slug"]
@@ -150,45 +150,13 @@ class CategoryView(ListView):
     def get_queryset(self):
         if not hasattr(self, "category"):
             self._resolve_category()
-        language = self.current_language
-        self._all_posts = posts_for_language(language).filter(category=self.category)
-        self._featured_post = (
-            self._all_posts.filter(is_featured=True).first()
-            or self._all_posts.first()
-        )
-        qs = self._all_posts
-        if self.request.GET.get("page", "1") == "1" and self._featured_post:
-            qs = qs.exclude(pk=self._featured_post.pk)
-        return qs
+        return posts_for_language(self.current_language).filter(category=self.category)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         language = self.current_language
         category = self.category
-        all_posts = self._all_posts
-        featured_post = self._featured_post
 
-        lang_posts = posts_for_language(language)
-        category_counts = (
-            lang_posts.filter(category__is_active=True)
-            .values("category_id")
-            .annotate(count=Count("id"))
-        )
-        count_map = {row["category_id"]: row["count"] for row in category_counts}
-        sidebar_categories = []
-        related_categories = []
-        for cat in Category.objects.filter(is_active=True).order_by("ordering", "order", "name"):
-            count = count_map.get(cat.pk, 0)
-            if not count:
-                continue
-            entry = {"category": cat, "count": count}
-            sidebar_categories.append(entry)
-            if cat.pk != category.pk:
-                related_categories.append(entry)
-        related_categories.sort(key=lambda item: item["count"], reverse=True)
-        related_categories = related_categories[:4]
-
-        last_updated = all_posts.order_by("-published_at").values_list("published_at", flat=True).first()
         display_name = category.field_for_language("name", language)
         display_description = category.field_for_language("description", language)
         site_name = ""
@@ -213,42 +181,16 @@ class CategoryView(ListView):
 
         context.update({
             "category": category,
-            "featured_post": featured_post,
-            "total_articles": all_posts.count(),
-            "last_updated": last_updated,
             "current_language": language,
-            "language_label": LANGUAGE_META.get(language, {}).get("label", language),
             "display_category_name": display_name,
             "display_category_description": display_description,
-            "related_categories": related_categories,
-            "sidebar_categories": sidebar_categories,
-            "sidebar_recent_posts": (
-                lang_posts.exclude(pk=featured_post.pk)[:5]
-                if featured_post
-                else lang_posts[:5]
-            ),
-            "popular_posts": lang_posts.order_by("-views_count", "-published_at")[:5],
             "display_seo_title": seo_title,
             "display_meta_description": meta_description,
             "canonical_url": self.request.build_absolute_uri(
                 category_url_for_language(category, language)
             ),
-            "available_language_links": self._category_language_links(category),
         })
         return context
-
-    def _category_language_links(self, category):
-        labels = {code: meta["label"] for code, meta in LANGUAGE_META.items()}
-        flag_urls = {code: meta["flag_url"] for code, meta in LANGUAGE_META.items()}
-        links = []
-        for lang in Post.LANGUAGE_CODES:
-            links.append({
-                "code": lang,
-                "label": labels[lang],
-                "flag_url": flag_urls[lang],
-                "url": category_url_for_language(category, lang),
-            })
-        return links
 
 
 class TagView(ListView):

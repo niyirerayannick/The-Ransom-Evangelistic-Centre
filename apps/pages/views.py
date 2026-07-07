@@ -1,5 +1,7 @@
-from django.views.generic import DetailView
+from django.views.generic import DetailView, View
 from django.shortcuts import get_object_or_404, redirect
+from django.http import FileResponse, Http404, HttpResponse
+from django.urls import reverse
 from django.db.models import Q
 from django.contrib import messages
 from django.utils.html import strip_tags
@@ -20,6 +22,7 @@ from .counselling_content import (
 from .donation_content import FAQ_ITEMS, GOOGLE_DONATION_FORM_URL, IMPACT_ITEMS, donate_ui_for_language
 from .forms import ContactMessageForm, CounsellingRequestForm, DonationPledgeForm
 from .models import Book, BookCategory, Counsellor, DonationMethod, DonationProgram, LeadershipMember, Page
+from .pdf_render import get_pdf_page_count, render_pdf_page_jpeg
 from .site_defaults import PAGE_SPECS
 
 
@@ -67,7 +70,49 @@ class PageDetailView(DetailView):
         page = self.object
         language = normalize_language_code(get_language())
 
-        if page.template_type == "leadership":
+        if page.template_type == "who_we_are":
+            from apps.news.models import Post
+            from .who_we_are_content import ministry_pathways_for_language
+
+            members = LeadershipMember.objects.filter(is_active=True).order_by("order", "name")[:4]
+            leadership_members = []
+            team_members_data = []
+            for member in members:
+                display_name = member.field_for_language("name", language, fallback=True) or member.name
+                display_role = member.field_for_language("role", language, fallback=True) or member.role
+                display_bio = member.field_for_language("bio", language, fallback=True) or member.bio
+                leadership_members.append({
+                    "id": member.pk,
+                    "display_name": display_name,
+                    "display_role": display_role,
+                    "display_bio_plain": strip_tags(display_bio),
+                    "photo_display_url": member.photo_display_url(),
+                    "translation_missing": False,
+                    "translation_missing_label": "",
+                })
+                team_members_data.append(member.to_public_dict(language))
+
+            book_count = Book.objects.filter(is_active=True).count()
+            post_count = Post.objects.filter(status=Post.STATUS_PUBLISHED).count()
+            counsellor_count = Counsellor.objects.filter(is_active=True).count()
+
+            context["leadership_members"] = leadership_members
+            context["team_members_data"] = team_members_data
+            context["leadership_page_slug"] = _page_slug_for_key("leadership", language)
+            context["mission_page_slug"] = _page_slug_for_key("mission-and-vision", language)
+            context["what_we_do_page_slug"] = _page_slug_for_key("what-we-do", language)
+            context["history_page_slug"] = _page_slug_for_key("our-history", language)
+            context["contact_page_slug"] = _page_slug_for_key("contact", language)
+            context["counsellor_page_slug"] = _page_slug_for_key("find-a-counsellor", language)
+            context["ministry_pathways"] = ministry_pathways_for_language(language)
+            context["impact_stats"] = [
+                {"value": "2023", "label": _("Founded with a Gospel vision")},
+                {"value": f"{post_count}+", "label": _("Articles published")},
+                {"value": str(book_count), "label": _("Books and resources")},
+                {"value": str(counsellor_count or 1), "label": _("Counselling connections")},
+            ]
+
+        elif page.template_type == "leadership":
             members = LeadershipMember.objects.filter(is_active=True).order_by("order", "name")
             display_members = []
             team_members_data = []
@@ -124,7 +169,24 @@ class PageDetailView(DetailView):
                 )
             if category_slug:
                 books = books.filter(category__slug=category_slug)
+            books = list(books)
             context["books"] = books
+            context["books_modal_data"] = {
+                book.slug: {
+                    "slug": book.slug,
+                    "title": book.title,
+                    "author": book.author,
+                    "description": book.description or "",
+                    "cover_image": book.cover_image.url if book.cover_image else "",
+                    "category": book.category.name if book.category else "",
+                    "language": book.get_language_display(),
+                    "published_at": book.published_at.strftime("%b %d, %Y") if book.published_at else "",
+                    "reader_url": reverse("pages:book_reader", kwargs={"slug": book.slug}),
+                    "download_url": book.download_file.url if book.download_file else "",
+                    "has_pdf": bool(book.download_file),
+                }
+                for book in books
+            }
             context["featured_book"] = Book.objects.filter(is_active=True, is_featured=True).first()
             context["book_categories"] = BookCategory.objects.filter(is_active=True)
             context["book_query"] = query
@@ -220,3 +282,58 @@ class BookReaderView(DetailView):
             from django.http import Http404
             raise Http404
         return book
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        language = normalize_language_code(get_language())
+        books_page = Page.objects.filter(
+            template_type="books",
+            is_active=True,
+            is_published=True,
+        ).first()
+        if books_page:
+            slug_field = f"slug_{language}"
+            context["books_page_slug"] = getattr(books_page, slug_field, None) or books_page.slug_en or "books"
+        else:
+            context["books_page_slug"] = _page_slug_for_key("books", language)
+        context["page_count"] = get_pdf_page_count(self.object.download_file)
+        language = (get_language() or "en").split("-")[0]
+        context["page_image_prefix"] = f"/{language}/books/{self.object.slug}/page/"
+        return context
+
+
+class BookPageImageView(View):
+    def get(self, request, slug, page_num):
+        book = get_object_or_404(Book.objects.filter(is_active=True), slug=slug)
+        if not book.download_file:
+            raise Http404
+        try:
+            image_bytes = render_pdf_page_jpeg(book.download_file, page_num)
+        except ValueError as exc:
+            raise Http404 from exc
+        except Exception as exc:
+            raise Http404 from exc
+        response = HttpResponse(image_bytes, content_type="image/jpeg")
+        response["Cache-Control"] = "public, max-age=86400"
+        return response
+
+
+class BookPdfView(DetailView):
+    model = Book
+    slug_field = "slug"
+    slug_url_kwarg = "slug"
+
+    def get_queryset(self):
+        return Book.objects.filter(is_active=True)
+
+    def get(self, request, *args, **kwargs):
+        book = get_object_or_404(self.get_queryset(), slug=kwargs["slug"])
+        if not book.download_file:
+            raise Http404
+        response = FileResponse(
+            book.download_file.open("rb"),
+            content_type="application/pdf",
+            as_attachment=False,
+        )
+        response["Cache-Control"] = "private, max-age=3600"
+        return response

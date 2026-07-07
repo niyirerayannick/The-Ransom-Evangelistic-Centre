@@ -12,7 +12,9 @@ def main_menu(request):
     active_children = MenuItem.objects.filter(is_active=True).order_by("order")
     menus = MenuItem.objects.filter(
         is_active=True, parent__isnull=True, location="main_menu"
-    ).order_by("order").prefetch_related(Prefetch("children", queryset=active_children))
+    ).select_related("page").order_by("order").prefetch_related(
+        Prefetch("children", queryset=active_children.select_related("page"))
+    )
     topbar_items = MenuItem.objects.filter(
         is_active=True, parent__isnull=True, location="topbar"
     ).order_by("order")
