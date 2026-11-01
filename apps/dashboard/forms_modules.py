@@ -338,6 +338,7 @@ class PartnerDashboardForm(forms.ModelForm):
             "ordering": _widget("number"), "is_active": _widget("checkbox"),
         }
         help_texts = {
+            "logo": _("Upload the partner's logo image. This image is shown on the homepage."),
             "website_url": _("Optional. Clicking this partner's logo on the homepage opens this website."),
         }
 
