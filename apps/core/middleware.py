@@ -1,4 +1,6 @@
-from django.http import HttpResponsePermanentRedirect
+from urllib.parse import urlsplit
+
+from django.http import HttpResponsePermanentRedirect, HttpResponseRedirect
 from django.shortcuts import render
 from django.utils import translation
 
@@ -21,17 +23,33 @@ class LegacyRedirectMiddleware:
 
     def __call__(self, request):
         path = request.path
+        query_string = request.META.get("QUERY_STRING", "")
+        if path == "/" and not request.GET.get("p"):
+            target = f"/en/?{query_string}" if query_string else "/en/"
+            response = HttpResponseRedirect(target)
+            response["Cache-Control"] = "no-store"
+            return response
+
         parts = path.lstrip("/").split("/", 1)
         if parts and parts[0] in self.language_codes:
             return self.get_response(request)
         language = "en"
         unprefixed_path = path
 
-        redirect = Redirect.objects.filter(
+        suffix = f"{unprefixed_path}?{query_string}" if query_string else unprefixed_path
+        redirects = Redirect.objects.filter(
             is_active=True,
             source_language=language,
-            old_url__endswith=unprefixed_path,
-        ).first()
+            old_url__endswith=suffix,
+        ).order_by("old_url")
+        redirect = None
+        for candidate in redirects:
+            old_url = urlsplit(candidate.old_url)
+            if old_url.path == unprefixed_path and (
+                not old_url.query or old_url.query == query_string
+            ):
+                redirect = candidate
+                break
         if redirect and redirect.new_url not in {path, unprefixed_path}:
             return HttpResponsePermanentRedirect(redirect.new_url)
 
