@@ -219,6 +219,8 @@ class Post(models.Model):
             slug_value = getattr(self, slug_field, None)
             if title_value and not slug_value:
                 setattr(self, slug_field, slugify(title_value)[:550])
+        if not self.slug:
+            self.slug = self.slug_en or self.slug_fr or self.slug_rw or slugify(self.title)[:550]
         super().save(*args, **kwargs)
 
     def get_localized_field(self, field_name, language=None):
