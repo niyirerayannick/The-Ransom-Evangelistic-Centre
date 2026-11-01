@@ -190,7 +190,7 @@ class PostCreateView(DashboardAccessMixin, View):
         action = request.POST.get("action")
         if action == "preview":
             return redirect("dashboard:post_preview", pk=post.pk)
-        return redirect("dashboard:post_edit", pk=post.pk)
+        return redirect("dashboard:post_list")
 
 
 class PostEditView(PostAccessMixin, View):

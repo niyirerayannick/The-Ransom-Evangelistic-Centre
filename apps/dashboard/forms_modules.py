@@ -337,6 +337,9 @@ class PartnerDashboardForm(forms.ModelForm):
             "logo": _widget("file"), "website_url": _widget("url"),
             "ordering": _widget("number"), "is_active": _widget("checkbox"),
         }
+        help_texts = {
+            "website_url": _("Optional. Clicking this partner's logo on the homepage opens this website."),
+        }
 
 
 class MenuItemDashboardForm(forms.ModelForm):

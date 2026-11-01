@@ -1,6 +1,6 @@
 from django.test import Client, TestCase
 
-from .models import Redirect
+from .models import Partner, Redirect, SiteSetting
 
 
 class LegacyRedirectMiddlewareTests(TestCase):
@@ -50,3 +50,16 @@ class LegacyRedirectMiddlewareTests(TestCase):
         response = self.client.get("/old-article/")
 
         self.assertNotEqual(response.status_code, 301)
+
+    def test_homepage_partner_logo_links_to_partner_website(self):
+        SiteSetting.objects.create(site_name="The Ransom Evangelistic Centre")
+        Partner.objects.create(
+            name="Example Partner",
+            logo="partners/example.png",
+            website_url="https://partner.example/",
+        )
+
+        response = self.client.get("/en/")
+
+        self.assertContains(response, 'href="https://partner.example/"')
+        self.assertContains(response, 'rel="noopener noreferrer"')
